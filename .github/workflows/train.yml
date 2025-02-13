@@ -111,7 +111,7 @@ jobs:
           # Create the trial component with numeric parameters
           aws sagemaker create-trial-component \
             --trial-component-name $COMPONENT_NAME \
-            --display-name "Training Step" \
+            --display-name "Training-Step" \
             --status 'PrimaryStatus=Completed,Message=TrainingCompleted' \
             --parameters "accuracy={NumberValue=$ACCURACY},recall={NumberValue=$RECALL}"
 
