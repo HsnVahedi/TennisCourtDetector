@@ -72,7 +72,6 @@ jobs:
                 }
               }
             ]" \
-            # --output-data-config "S3OutputPath=s3://${{ secrets.S3_BUCKET }}/${JOB_NAME}/output/" \
             --output-data-config "S3OutputPath=s3://${{ secrets.S3_BUCKET }}/" \
             --resource-config '{"InstanceType":"ml.m5.xlarge","InstanceCount":1,"VolumeSizeInGB":50}' \
             --stopping-condition '{"MaxRuntimeInSeconds":3600}' \
