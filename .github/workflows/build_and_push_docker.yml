@@ -20,22 +20,22 @@ jobs:
 
       - name: Log into Amazon ECR
         run: |
-          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
 
       - name: Build Training Image
         run: |
-          docker build -t ${{ env.ECR_REPOSITORY }}:train-${{ github.sha }} -f docker/training/Dockerfile .
-          docker tag ${{ env.ECR_REPOSITORY }}:train-${{ github.sha }} ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:train-${{ github.sha }}
+          docker build -t ${{ secrets.ECR_REPOSITORY }}:train-${{ github.sha }} -f docker/training/Dockerfile .
+          docker tag ${{ secrets.ECR_REPOSITORY }}:train-${{ github.sha }} ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:train-${{ github.sha }}
 
       - name: Push Training Image
         run: |
-          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:train-${{ github.sha }}
+          docker push ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:train-${{ github.sha }}
 
       - name: Build Inference Image
         run: |
-          docker build -t ${{ env.ECR_REPOSITORY }}:infer-${{ github.sha }} -f docker/inference/Dockerfile .
-          docker tag ${{ env.ECR_REPOSITORY }}:infer-${{ github.sha }} ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:infer-${{ github.sha }}
+          docker build -t ${{ secrets.ECR_REPOSITORY }}:infer-${{ github.sha }} -f docker/inference/Dockerfile .
+          docker tag ${{ secrets.ECR_REPOSITORY }}:infer-${{ github.sha }} ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:infer-${{ github.sha }}
 
       - name: Push Inference Image
         run: |
-          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:infer-${{ github.sha }}
+          docker push ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:infer-${{ github.sha }}

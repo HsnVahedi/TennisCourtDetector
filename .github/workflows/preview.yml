@@ -28,7 +28,7 @@ jobs:
           DATA_VERSION=${{ github.event.inputs.dataset-version }}  # If using manual dispatch
           # If you want dataset-version from the commit message or something else, handle accordingly.
 
-          TRAIN_IMAGE_URI="${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:train-${{ github.sha }}"
+          TRAIN_IMAGE_URI="${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:train-${{ github.sha }}"
           TIMESTAMP=$(date +%s)
           JOB_NAME="tennis-court-detection-train-${TIMESTAMP}"
 
@@ -107,7 +107,7 @@ jobs:
           # Use the training output artifact from your job
           JOB_NAME="tennis-court-detection-train-..." # same name used above
           MODEL_DATA_URL="s3://${{ secrets.S3_BUCKET }}/output/${JOB_NAME}/output/model.tar.gz"
-          INFER_IMAGE_URI="${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:infer-${{ github.sha }}"
+          INFER_IMAGE_URI="${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:infer-${{ github.sha }}"
           MODEL_NAME="tennis-court-preview-model-${{ github.sha }}"
 
           aws sagemaker create-model \
