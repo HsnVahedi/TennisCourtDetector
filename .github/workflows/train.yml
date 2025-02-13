@@ -35,42 +35,48 @@ jobs:
             DATA_VERSION="1"
           fi
 
+          # Bucket check (optional)
+          if [ -z "${{ secrets.S3_BUCKET }}" ]; then
+            echo "Error: S3_BUCKET secret is not set."
+            exit 1
+          fi
+
           TRAIN_IMAGE_URI="${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:train-${{ github.sha }}"
           TIMESTAMP=$(date +%s)
           JOB_NAME="tennis-court-detection-train-${TIMESTAMP}"
 
-          # Ensure we reference "s3://bucket_name" properly (no triple slash)
+          # Reference "s3://bucket_name" properly (no triple slash)
           aws sagemaker create-training-job \
-            --training-job-name $JOB_NAME \
-            --algorithm-specification TrainingImage=$TRAIN_IMAGE_URI,TrainingInputMode=File \
+            --training-job-name "$JOB_NAME" \
+            --algorithm-specification TrainingImage="$TRAIN_IMAGE_URI",TrainingInputMode=File \
             --role-arn ${{ secrets.SAGE_MAKER_EXECUTION_ROLE }} \
-            --input-data-config '[ 
+            --input-data-config "[ 
               {
-                "ChannelName": "train", 
-                "DataSource": {
-                  "S3DataSource": {
-                    "S3DataType": "S3Prefix",
-                    "S3Uri": "s3://${{ secrets.S3_BUCKET }}/datasets/version'${DATA_VERSION}'/train/",
-                    "S3DataDistributionType": "FullyReplicated"
+                \"ChannelName\": \"train\",
+                \"DataSource\": {
+                  \"S3DataSource\": {
+                    \"S3DataType\": \"S3Prefix\",
+                    \"S3Uri\": \"s3://${{ secrets.S3_BUCKET }}/datasets/version${DATA_VERSION}/train/\",
+                    \"S3DataDistributionType\": \"FullyReplicated\"
                   }
                 }
               },
               {
-                "ChannelName": "validation",
-                "DataSource": {
-                  "S3DataSource": {
-                    "S3DataType": "S3Prefix",
-                    "S3Uri": "s3://${{ secrets.S3_BUCKET }}/datasets/version'${DATA_VERSION}'/validation/",
-                    "S3DataDistributionType": "FullyReplicated"
+                \"ChannelName\": \"validation\",
+                \"DataSource\": {
+                  \"S3DataSource\": {
+                    \"S3DataType\": \"S3Prefix\",
+                    \"S3Uri\": \"s3://${{ secrets.S3_BUCKET }}/datasets/version${DATA_VERSION}/validation/\",
+                    \"S3DataDistributionType\": \"FullyReplicated\"
                   }
                 }
               }
-            ]' \
-            --output-data-config S3OutputPath=s3://${{ secrets.S3_BUCKET }}/${JOB_NAME}/output/ \
+            ]" \
+            --output-data-config "S3OutputPath=s3://${{ secrets.S3_BUCKET }}/${JOB_NAME}/output/" \
             --resource-config '{"InstanceType":"ml.m5.xlarge","InstanceCount":1,"VolumeSizeInGB":50}' \
             --stopping-condition '{"MaxRuntimeInSeconds":3600}' \
             --hyper-parameters '{"epochs":"5","batch_size":"32"}' \
-            --tags Key=GitCommit,Value='${{ github.sha }}' Key=Branch,Value='${{ github.ref_name }}'
+            --tags "Key=GitCommit,Value='${{ github.sha }}' Key=Branch,Value='${{ github.ref_name }}'"
 
       - name: Wait for Training Job Completion
         run: |
