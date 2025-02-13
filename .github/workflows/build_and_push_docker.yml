@@ -1,0 +1,41 @@
+name: BuildAndPushDocker
+
+on:
+  push:
+    branches: [ "*" ]  # or specify only the branches you want to build images for
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Log into Amazon ECR
+        run: |
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
+
+      - name: Build Training Image
+        run: |
+          docker build -t ${{ env.ECR_REPOSITORY }}:train-${{ github.sha }} -f docker/training/Dockerfile .
+          docker tag ${{ env.ECR_REPOSITORY }}:train-${{ github.sha }} ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:train-${{ github.sha }}
+
+      - name: Push Training Image
+        run: |
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:train-${{ github.sha }}
+
+      - name: Build Inference Image
+        run: |
+          docker build -t ${{ env.ECR_REPOSITORY }}:infer-${{ github.sha }} -f docker/inference/Dockerfile .
+          docker tag ${{ env.ECR_REPOSITORY }}:infer-${{ github.sha }} ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:infer-${{ github.sha }}
+
+      - name: Push Inference Image
+        run: |
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:infer-${{ github.sha }}

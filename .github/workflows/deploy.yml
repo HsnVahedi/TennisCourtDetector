@@ -1,0 +1,68 @@
+name: DeployAction
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Promote Preview Model to Production
+        run: |
+          # Example approach (if not using Model Registry):
+          # We know the "preview" model name follows a pattern "tennis-court-preview-model-SHA".
+          # Let's say we want to create a new "production" model name with that same artifact.
+
+          PREVIEW_SHA=<GET LATEST PREVIEW SHA OR MODEL NAME>
+          PREVIEW_MODEL_NAME="tennis-court-preview-model-${PREVIEW_SHA}"
+          PROD_MODEL_NAME="tennis-court-prod-model-${{ github.sha }}"
+
+          # fetch the model info from the preview model
+          MODEL_CONTAINER=$(aws sagemaker describe-model --model-name $PREVIEW_MODEL_NAME --query 'PrimaryContainer' --output json)
+
+          # create a production model with same container + data
+          aws sagemaker create-model \
+            --model-name $PROD_MODEL_NAME \
+            --primary-container "$MODEL_CONTAINER" \
+            --execution-role-arn ${{ secrets.SAGE_MAKER_EXECUTION_ROLE }}
+
+          # Option A: Update a real-time endpoint
+          ENDPOINT_CONFIG_NAME="tennis-court-detection-prod-config-${{ github.sha }}"
+          ENDPOINT_NAME="tennis-court-detection-prod-endpoint"
+
+          aws sagemaker create-endpoint-config \
+            --endpoint-config-name $ENDPOINT_CONFIG_NAME \
+            --production-variants "[{
+              \"VariantName\":\"AllTraffic\",
+              \"ModelName\":\"$PROD_MODEL_NAME\",
+              \"InitialInstanceCount\":1,
+              \"InstanceType\":\"ml.m5.xlarge\"
+            }]"
+
+          # If endpoint doesn't exist, create it
+          # If it does exist, just update it to the new endpoint config
+          if aws sagemaker describe-endpoint --endpoint-name $ENDPOINT_NAME 2>/dev/null; then
+            echo "Endpoint exists, updating..."
+            aws sagemaker update-endpoint \
+              --endpoint-name $ENDPOINT_NAME \
+              --endpoint-config-name $ENDPOINT_CONFIG_NAME
+          else
+            echo "Endpoint does not exist, creating..."
+            aws sagemaker create-endpoint \
+              --endpoint-name $ENDPOINT_NAME \
+              --endpoint-config-name $ENDPOINT_CONFIG_NAME
+          fi
+
+          # Wait for endpoint to be in service
+          aws sagemaker wait endpoint-in-service --endpoint-name $ENDPOINT_NAME
