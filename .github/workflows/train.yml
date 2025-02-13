@@ -87,15 +87,16 @@ jobs:
 
       - name: Capture & Store Training Metrics in SageMaker Experiments
         run: |
-          # If your container writes metrics to CloudWatch or to a file in S3, you can fetch them.
-          # For illustration, let's assume we have a JSON file with metrics in S3 like:
-          # s3://${{ secrets.S3_BUCKET }}/output/${JOB_NAME}/metrics.json
-          # We'll fetch that file, parse it, and create a trial component with the metrics
-          
-          aws s3 cp s3://${{ secrets.S3_BUCKET }}/${JOB_NAME}/output/metrics.json ./metrics.json
+          # Download the model artifact that contains metrics.json
+          aws s3 cp s3://${{ secrets.S3_BUCKET }}/${JOB_NAME}/output/model.tar.gz ./model.tar.gz
 
-          ACCURACY=$(jq -r '.accuracy' metrics.json)
-          RECALL=$(jq -r '.recall' metrics.json)
+          # Extract the artifact
+          mkdir -p extracted
+          tar -xzf model.tar.gz -C extracted
+
+          # Read and parse the metrics
+          ACCURACY=$(jq -r '.accuracy' extracted/metrics.json)
+          RECALL=$(jq -r '.recall' extracted/metrics.json)
 
           # Create or Update a Trial Component in SageMaker
           COMPONENT_NAME="TrainComponent-${JOB_NAME}"
