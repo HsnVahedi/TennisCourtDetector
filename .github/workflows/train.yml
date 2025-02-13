@@ -78,6 +78,8 @@ jobs:
             --hyper-parameters '{"epochs":"5","batch_size":"32"}' \
             --tags Key=GitCommit,Value=${{ github.sha }} Key=Branch,Value=${{ github.ref_name }}
 
+          echo "JOB_NAME=$JOB_NAME" >> $GITHUB_ENV
+
       - name: Wait for Training Job Completion
         run: |
           # Poll until the job is completed
