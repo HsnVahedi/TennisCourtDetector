@@ -29,12 +29,17 @@ jobs:
 
       - name: Launch SageMaker Training Job
         run: |
-          DATA_VERSION=${{ github.event.inputs.dataset-version }}  # If using manual dispatch
+          # Retrieve dataset-version from the event, or set a default if empty
+          DATA_VERSION="${{ github.event.inputs.dataset-version }}"
+          if [ -z "$DATA_VERSION" ]; then
+            DATA_VERSION="1"
+          fi
 
           TRAIN_IMAGE_URI="${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:train-${{ github.sha }}"
           TIMESTAMP=$(date +%s)
           JOB_NAME="tennis-court-detection-train-${TIMESTAMP}"
 
+          # Ensure we reference "s3://bucket_name" properly (no triple slash)
           aws sagemaker create-training-job \
             --training-job-name $JOB_NAME \
             --algorithm-specification TrainingImage=$TRAIN_IMAGE_URI,TrainingInputMode=File \
