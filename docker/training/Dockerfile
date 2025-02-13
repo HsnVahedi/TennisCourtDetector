@@ -27,7 +27,7 @@ RUN mkdir -p /opt/ml/code
 
 # Copy your training script into the container.
 # In this example, we're calling it "train.py" and placing it in /opt/ml/code.
-COPY train.py /opt/ml/code/train.py
+COPY docker/training/train.py /opt/ml/code/train.py
 
 # Set the working directory.
 WORKDIR /opt/ml/code
