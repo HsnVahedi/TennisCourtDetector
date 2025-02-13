@@ -91,7 +91,7 @@ def main():
     with open(metrics_path, "w") as f:
         json.dump(metrics, f)
     print(f"Metrics saved to {metrics_path}")
-    print(metrics_path, os.listdir(metrics_path))
+    print(metrics_path, os.listdir(output_dir))
 
     # Save the model (PyTorch save example)
     model_path = os.path.join(model_dir, "model.pth")
