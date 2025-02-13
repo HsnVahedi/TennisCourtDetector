@@ -106,7 +106,8 @@ jobs:
           aws sagemaker create-experiment --experiment-name $EXPERIMENT_NAME || true
 
           # Create Trial if not exist
-          aws sagemaker create-trial --trial-name $TRIAL_NAME --experiment-name $EXPERIMENT_NAME --role-arn ${{ secrets.SAGE_MAKER_EXECUTION_ROLE }} || true
+          # aws sagemaker create-trial --trial-name $TRIAL_NAME --experiment-name $EXPERIMENT_NAME --role-arn ${{ secrets.SAGE_MAKER_EXECUTION_ROLE }} || true
+          aws sagemaker create-trial --trial-name $TRIAL_NAME --experiment-name $EXPERIMENT_NAME || true
 
           # Create the trial component with numeric parameters
           aws sagemaker create-trial-component \
