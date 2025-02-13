@@ -29,10 +29,7 @@ jobs:
 
       - name: Launch SageMaker Training Job
         run: |
-          # Example of using AWS CLI to start a training job
-          # Assume dataset-version is an input or environment variable
           DATA_VERSION=${{ github.event.inputs.dataset-version }}  # If using manual dispatch
-          # If you want dataset-version from the commit message or something else, handle accordingly.
 
           TRAIN_IMAGE_URI="${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:train-${{ github.sha }}"
           TIMESTAMP=$(date +%s)
@@ -48,7 +45,7 @@ jobs:
                 "DataSource": {
                   "S3DataSource": {
                     "S3DataType": "S3Prefix",
-                    "S3Uri": "s3://${{ secrets.S3_BUCKET }}/datasets/version'$DATA_VERSION'/train/",
+                    "S3Uri": "s3://${{ secrets.S3_BUCKET }}/datasets/version'${DATA_VERSION}'/train/",
                     "S3DataDistributionType": "FullyReplicated"
                   }
                 }
@@ -58,7 +55,7 @@ jobs:
                 "DataSource": {
                   "S3DataSource": {
                     "S3DataType": "S3Prefix",
-                    "S3Uri": "s3://${{ secrets.S3_BUCKET }}/datasets/version'$DATA_VERSION'/validation/",
+                    "S3Uri": "s3://${{ secrets.S3_BUCKET }}/datasets/version'${DATA_VERSION}'/validation/",
                     "S3DataDistributionType": "FullyReplicated"
                   }
                 }
