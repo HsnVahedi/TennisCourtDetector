@@ -98,7 +98,6 @@ jobs:
           ACCURACY=$(jq -r '.accuracy' extracted/metrics.json)
           RECALL=$(jq -r '.recall' extracted/metrics.json)
 
-          # Create or Update a Trial Component in SageMaker
           COMPONENT_NAME="TrainComponent-${JOB_NAME}"
           EXPERIMENT_NAME="TennisCourtDetectionExperiment"
           TRIAL_NAME="TrainTrial-${{ github.ref_name }}-${{ github.sha }}"
@@ -109,12 +108,12 @@ jobs:
           # Create Trial if not exist
           aws sagemaker create-trial --trial-name $TRIAL_NAME --experiment-name $EXPERIMENT_NAME --role-arn ${{ secrets.SAGE_MAKER_EXECUTION_ROLE }} || true
 
-          # Create a trial component for this training step
+          # Create the trial component with numeric parameters
           aws sagemaker create-trial-component \
             --trial-component-name $COMPONENT_NAME \
             --display-name "Training Step" \
             --status 'PrimaryStatus=Completed,Message=TrainingCompleted' \
-            --parameters '{"accuracy":"'$ACCURACY'","recall":"'$RECALL'"}'
+            --parameters "accuracy={NumberValue=$ACCURACY},recall={NumberValue=$RECALL}"
 
           # Associate it with the trial
           aws sagemaker associate-trial-component --trial-name $TRIAL_NAME --trial-component-name $COMPONENT_NAME
