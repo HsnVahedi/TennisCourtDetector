@@ -1,0 +1,62 @@
+name: "Build and Push Docker"
+description: "Build and push Docker images to ECR"
+
+inputs:
+  ecr_registry:
+    description: "ECR registry domain"
+    required: true
+  ecr_repository:
+    description: "ECR repository name"
+    required: true
+  aws_access_key_id:
+    description: "AWS access key ID"
+    required: true
+  aws_secret_access_key:
+    description: "AWS secret access key"
+    required: true
+  aws_region:
+    description: "AWS region"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ inputs.aws_access_key_id }}
+        aws-secret-access-key: ${{ inputs.aws_secret_access_key }}
+        aws-region: ${{ inputs.aws_region }}
+
+    - name: Log into Amazon ECR
+      shell: bash
+      run: |
+        aws ecr get-login-password --region ${{ inputs.aws_region }} \
+        | docker login --username AWS --password-stdin ${{ inputs.ecr_registry }}
+
+    - name: Build Training Image
+      shell: bash
+      run: |
+        docker build -t ${{ inputs.ecr_repository }}:train-${{ github.sha }} -f docker/training/Dockerfile .
+        docker tag ${{ inputs.ecr_repository }}:train-${{ github.sha }} \
+          ${{ inputs.ecr_registry }}/${{ inputs.ecr_repository }}:train-${{ github.sha }}
+
+    - name: Push Training Image
+      shell: bash
+      run: |
+        docker push ${{ inputs.ecr_registry }}/${{ inputs.ecr_repository }}:train-${{ github.sha }}
+
+    - name: Build Inference Image
+      shell: bash
+      run: |
+        docker build -t ${{ inputs.ecr_repository }}:infer-${{ github.sha }} -f docker/inference/Dockerfile .
+        docker tag ${{ inputs.ecr_repository }}:infer-${{ github.sha }} \
+          ${{ inputs.ecr_registry }}/${{ inputs.ecr_repository }}:infer-${{ github.sha }}
+
+    - name: Push Inference Image
+      shell: bash
+      run: |
+        docker push ${{ inputs.ecr_registry }}/${{ inputs.ecr_repository }}:infer-${{ github.sha }} 

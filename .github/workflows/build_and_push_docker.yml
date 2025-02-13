@@ -2,7 +2,7 @@ name: BuildAndPushDocker
 
 on:
   push:
-    branches: [ "*" ]  # or specify only the branches you want to build images for
+    branches: [ "nobranch" ]  # or specify only the branches you want to build images for
 
 jobs:
   build-and-push:
