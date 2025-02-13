@@ -72,7 +72,8 @@ jobs:
                 }
               }
             ]" \
-            --output-data-config "S3OutputPath=s3://${{ secrets.S3_BUCKET }}/${JOB_NAME}/output/" \
+            # --output-data-config "S3OutputPath=s3://${{ secrets.S3_BUCKET }}/${JOB_NAME}/output/" \
+            --output-data-config "S3OutputPath=s3://${{ secrets.S3_BUCKET }}/" \
             --resource-config '{"InstanceType":"ml.m5.xlarge","InstanceCount":1,"VolumeSizeInGB":50}' \
             --stopping-condition '{"MaxRuntimeInSeconds":3600}' \
             --hyper-parameters '{"epochs":"5","batch_size":"32"}' \
@@ -82,7 +83,7 @@ jobs:
 
       - name: Wait for Training Job Completion
         run: |
-          # Poll until the job is completed
+          # Poll until the job is completed or stopped
           aws sagemaker wait training-job-completed-or-stopped --training-job-name $JOB_NAME
 
       - name: Capture & Store Training Metrics in SageMaker Experiments
