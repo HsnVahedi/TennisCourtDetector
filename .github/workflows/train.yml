@@ -92,7 +92,7 @@ jobs:
           # s3://${{ secrets.S3_BUCKET }}/output/${JOB_NAME}/metrics.json
           # We'll fetch that file, parse it, and create a trial component with the metrics
           
-          aws s3 cp s3://${{ secrets.S3_BUCKET }}/output/${JOB_NAME}/metrics.json ./metrics.json
+          aws s3 cp s3://${{ secrets.S3_BUCKET }}/${JOB_NAME}/output/metrics.json ./metrics.json
 
           ACCURACY=$(jq -r '.accuracy' metrics.json)
           RECALL=$(jq -r '.recall' metrics.json)
