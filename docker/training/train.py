@@ -87,11 +87,12 @@ def main():
         "accuracy": accuracy,
         "recall": recall
     }
-    metrics_path = os.path.join(output_dir, "metrics.json")
+    # metrics_path = os.path.join(output_dir, "metrics.json")
+    metrics_path = os.path.join(model_dir, "metrics.json")
     with open(metrics_path, "w") as f:
         json.dump(metrics, f)
     print(f"Metrics saved to {metrics_path}")
-    print(metrics_path, os.listdir(output_dir))
+    print(metrics_path, os.listdir(model_dir))
 
     # Save the model (PyTorch save example)
     model_path = os.path.join(model_dir, "model.pth")
