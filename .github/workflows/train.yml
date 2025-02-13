@@ -19,14 +19,13 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Build and Push Docker Images
-        uses: ./.github/workflows/build_and_push_docker.yml
-        # or copy/paste the build commands inline if you prefer
-        # with:
-          # if your reusable workflow has inputs, define them here
-          # or you can just rely on env variables
-          # e.g. ecr_registry: ${{ secrets.ECR_REGISTRY }}
-          # ecr_repository: ${{ secrets.ECR_REPOSITORY }}
-          # or pass environment variables if needed
+        uses: ./.github/actions/build-and-push
+        with:
+          ecr_registry: ${{ secrets.ECR_REGISTRY }}
+          ecr_repository: ${{ secrets.ECR_REPOSITORY }}
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_region: ${{ secrets.AWS_REGION }}
 
       - name: Launch SageMaker Training Job
         run: |
