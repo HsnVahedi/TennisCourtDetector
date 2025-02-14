@@ -49,6 +49,15 @@ jobs:
           SAGE_MAKER_EXECUTION_ROLE: ${{ secrets.SAGE_MAKER_EXECUTION_ROLE }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           MLFLOW_TRACKING_ARN: ${{ secrets.MLFLOW_TRACKING_ARN }}
+        # run: |
+        #   docker run --rm \
+        #     -e DATA_VERSION \
+        #     -e S3_BUCKET \
+        #     -e SAGE_MAKER_EXECUTION_ROLE \
+        #     -e AWS_REGION \
+        #     -e MLFLOW_TRACKING_ARN \
+        #     pipeline-docker \
+        #     python /opt/ml/code/pipeline.py
         run: |
           docker run --rm \
             -e DATA_VERSION \
@@ -57,4 +66,4 @@ jobs:
             -e AWS_REGION \
             -e MLFLOW_TRACKING_ARN \
             pipeline-docker \
-            python /opt/ml/code/pipeline.py
+            conda run -n pipeline-env python /opt/ml/code/pipeline.py
