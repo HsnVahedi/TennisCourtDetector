@@ -45,6 +45,11 @@ def main():
             'epochs': '5',
             'batch_size': '32'
         },
+        environment={
+            'MLFLOW_TRACKING_ARN': tracking_arn,
+            # 'AWS_REGION': region,
+            # 'S3_BUCKET': bucket,
+        }
     )
 
     # Example channel mapping from your existing workflow:
