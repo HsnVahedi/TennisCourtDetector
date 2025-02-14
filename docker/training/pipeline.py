@@ -31,7 +31,8 @@ def main():
     # Create a PyTorch Estimator (adjust the framework version, instance_type, etc. if needed)
     estimator = PyTorch(
         entry_point='train.py',
-        source_dir='docker/training',
+        # source_dir='docker/training',
+        source_dir='.',
         role=role,
         sagemaker_session=sm_session,
         framework_version='2.0.0',
