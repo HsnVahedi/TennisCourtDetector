@@ -2,11 +2,21 @@ import os
 import sagemaker
 import mlflow
 from sagemaker.pytorch import PyTorch
+import boto3
 
 def main():
     # Retrieve environment variables/secrets
     role = os.getenv('SAGE_MAKER_EXECUTION_ROLE')
-    region = os.getenv('AWS_REGION', 'us-east-1')
+    region = os.getenv('AWS_REGION', 'us-east-2')
+    print('--------------------------------')
+    print('--------------------------------')
+    print('--------------------------------')
+    print('--------------------------------')
+    print(f"Region: {region}")
+    print('--------------------------------')
+    print('--------------------------------')
+    print('--------------------------------')
+    print('--------------------------------')
     bucket = os.getenv('S3_BUCKET')
     tracking_arn = os.getenv('MLFLOW_TRACKING_ARN', '')
 
@@ -14,10 +24,7 @@ def main():
     data_version = os.getenv('DATA_VERSION', '1')
     
     # Set up the SageMaker session
-    sm_session = sagemaker.Session()
-    
-    # If you want to configure a particular region for the session:
-    # sm_session = sagemaker.Session(boto_session=boto3.Session(region_name=region))
+    sm_session = sagemaker.Session(boto_session=boto3.Session(region_name=region))
     
     mlflow.set_tracking_uri(tracking_arn)
 
