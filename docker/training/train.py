@@ -12,7 +12,7 @@ from sklearn.metrics import accuracy_score, recall_score
 
 def main():
     # Example hyperparameters might be read from environment or script arguments
-    epochs = int(os.environ.get("epochs", 2))
+    epochs = int(os.environ.get("epochs", 200))
     batch_size = int(os.environ.get("batch_size", 4))
     learning_rate = 0.001
 
@@ -21,11 +21,6 @@ def main():
     # If 'MLFLOW_TRACKING_ARN' is set in the environment, we can pass it to mlflow.set_tracking_uri(...).
     # ----------------------------------------------------------------------------
     tracking_uri = os.environ.get("MLFLOW_TRACKING_ARN")
-    print('TTTTTTTTTTTTTTTTTTTT')
-    print('TTTTTTTTTTTTTTTTTTTT')
-    print(f"Tracking URI: {tracking_uri}")
-    print('TTTTTTTTTTTTTTTTTTTT')
-    print('TTTTTTTTTTTTTTTTTTTT')
     mlflow.set_tracking_uri(tracking_uri)
     
     # ----------------------------------------------------------------------------
