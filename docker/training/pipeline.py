@@ -35,7 +35,7 @@ def main():
         role=role,
         sagemaker_session=sm_session,
         framework_version='2.0.0',
-        py_version='py3',
+        py_version='py310',
         instance_count=1,
         instance_type='ml.m5.xlarge',
         hyperparameters={
