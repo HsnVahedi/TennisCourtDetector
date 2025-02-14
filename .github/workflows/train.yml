@@ -27,94 +27,34 @@ jobs:
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws_region: ${{ secrets.AWS_REGION }}
 
-      - name: Launch SageMaker Training Job
+      # ----------------------------------------------------------------
+      # BUILD the pipeline container locally (optional), if you want to run 
+      # it directly in this workflow. Alternatively, you can re-use the 
+      # ECR push if your build-and-push action already handles pipeline logic.
+      # ----------------------------------------------------------------
+      - name: Build pipeline container
         run: |
-          # Retrieve dataset-version from the event, or set a default if empty
-          DATA_VERSION="${{ github.event.inputs.dataset-version }}"
-          if [ -z "$DATA_VERSION" ]; then
-            DATA_VERSION="1"
-          fi
+          docker build \
+            -t pipeline-docker \
+            -f docker/training/PipelineDockerfile \
+            .
 
-          # Bucket check (optional)
-          if [ -z "${{ secrets.S3_BUCKET }}" ]; then
-            echo "Error: S3_BUCKET secret is not set."
-            exit 1
-          fi
-
-          TRAIN_IMAGE_URI="${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:train-${{ github.sha }}"
-          TIMESTAMP=$(date +%s)
-          JOB_NAME="tennis-court-detection-train-${TIMESTAMP}"
-
-          # Reference "s3://bucket_name" properly (no triple slash)
-          aws sagemaker create-training-job \
-            --training-job-name "$JOB_NAME" \
-            --algorithm-specification TrainingImage="$TRAIN_IMAGE_URI",TrainingInputMode=File \
-            --role-arn ${{ secrets.SAGE_MAKER_EXECUTION_ROLE }} \
-            --input-data-config "[ 
-              {
-                \"ChannelName\": \"train\",
-                \"DataSource\": {
-                  \"S3DataSource\": {
-                    \"S3DataType\": \"S3Prefix\",
-                    \"S3Uri\": \"s3://${{ secrets.S3_BUCKET }}/datasets/${DATA_VERSION}/training/\",
-                    \"S3DataDistributionType\": \"FullyReplicated\"
-                  }
-                }
-              },
-              {
-                \"ChannelName\": \"validation\",
-                \"DataSource\": {
-                  \"S3DataSource\": {
-                    \"S3DataType\": \"S3Prefix\",
-                    \"S3Uri\": \"s3://${{ secrets.S3_BUCKET }}/datasets/${DATA_VERSION}/validation/\",
-                    \"S3DataDistributionType\": \"FullyReplicated\"
-                  }
-                }
-              }
-            ]" \
-            --output-data-config "S3OutputPath=s3://${{ secrets.S3_BUCKET }}/" \
-            --resource-config '{"InstanceType":"ml.m5.xlarge","InstanceCount":1,"VolumeSizeInGB":50}' \
-            --stopping-condition '{"MaxRuntimeInSeconds":3600}' \
-            --hyper-parameters '{"epochs":"5","batch_size":"32"}' \
-            --tags Key=GitCommit,Value=${{ github.sha }} Key=Branch,Value=${{ github.ref_name }}
-
-          echo "JOB_NAME=$JOB_NAME" >> $GITHUB_ENV
-
-      - name: Wait for Training Job Completion
+      # ----------------------------------------------------------------
+      # RUN the pipeline container, passing environment variables for Sagemaker
+      # ----------------------------------------------------------------
+      - name: Run Sagemaker Pipeline Container
+        env:
+          DATA_VERSION: ${{ github.event.inputs.dataset-version || '1' }}
+          S3_BUCKET: ${{ secrets.S3_BUCKET }}
+          SAGE_MAKER_EXECUTION_ROLE: ${{ secrets.SAGE_MAKER_EXECUTION_ROLE }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          MLFLOW_TRACKING_ARN: ${{ secrets.MLFLOW_TRACKING_ARN }}
         run: |
-          # Poll until the job is completed or stopped
-          aws sagemaker wait training-job-completed-or-stopped --training-job-name $JOB_NAME
-
-      - name: Capture & Store Training Metrics in SageMaker Experiments
-        run: |
-          # Download the model artifact that contains metrics.json
-          aws s3 cp s3://${{ secrets.S3_BUCKET }}/${JOB_NAME}/output/model.tar.gz ./model.tar.gz
-
-          # Extract the artifact
-          mkdir -p extracted
-          tar -xzf model.tar.gz -C extracted
-
-          # Read and parse the metrics
-          ACCURACY=$(jq -r '.accuracy' extracted/metrics.json)
-          RECALL=$(jq -r '.recall' extracted/metrics.json)
-
-          COMPONENT_NAME="TrainComponent-${JOB_NAME}"
-          EXPERIMENT_NAME="TennisCourtDetectionExperiment"
-          TRIAL_NAME="TrainTrial-${{ github.ref_name }}-${{ github.sha }}"
-
-          # Create Experiment if not exist (no harm if it exists)
-          aws sagemaker create-experiment --experiment-name $EXPERIMENT_NAME || true
-
-          # Create Trial if not exist
-          # aws sagemaker create-trial --trial-name $TRIAL_NAME --experiment-name $EXPERIMENT_NAME --role-arn ${{ secrets.SAGE_MAKER_EXECUTION_ROLE }} || true
-          aws sagemaker create-trial --trial-name $TRIAL_NAME --experiment-name $EXPERIMENT_NAME || true
-
-          # Create the trial component with numeric parameters
-          aws sagemaker create-trial-component \
-            --trial-component-name $COMPONENT_NAME \
-            --display-name "Training-Step" \
-            --status 'PrimaryStatus=Completed,Message=TrainingCompleted' \
-            --parameters "accuracy={NumberValue=$ACCURACY},recall={NumberValue=$RECALL}"
-
-          # Associate it with the trial
-          aws sagemaker associate-trial-component --trial-name $TRIAL_NAME --trial-component-name $COMPONENT_NAME
+          docker run --rm \
+            -e DATA_VERSION \
+            -e S3_BUCKET \
+            -e SAGE_MAKER_EXECUTION_ROLE \
+            -e AWS_REGION \
+            -e MLFLOW_TRACKING_ARN \
+            pipeline-docker \
+            python /opt/ml/code/pipeline.py

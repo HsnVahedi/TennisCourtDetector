@@ -19,7 +19,9 @@ RUN pip install --no-cache-dir --upgrade pip && \
       pandas \
       tqdm \
       requests \
-      # add more libraries if your code needs them
+      # added libraries for MLflow usage:
+      mlflow-skinny==2.13.2 \
+      sagemaker-mlflow==0.1.0 \
       ipykernel
 
 # Create a directory to hold your training script(s).
