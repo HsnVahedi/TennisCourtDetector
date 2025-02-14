@@ -20,8 +20,13 @@ def main():
     # ADDED: MLflow tracking URI from environment (provided by GitHub actions or the Docker environment).
     # If 'MLFLOW_TRACKING_ARN' is set in the environment, we can pass it to mlflow.set_tracking_uri(...).
     # ----------------------------------------------------------------------------
-    s3_tracking_uri = os.environ.get("MLFLOW_S3_BUCKET")
-    mlflow.set_tracking_uri(s3_tracking_uri)
+    tracking_uri = os.environ.get("MLFLOW_TRACKING_ARN")
+    print('TTTTTTTTTTTTTTTTTTTT')
+    print('TTTTTTTTTTTTTTTTTTTT')
+    print(f"Tracking URI: {tracking_uri}")
+    print('TTTTTTTTTTTTTTTTTTTT')
+    print('TTTTTTTTTTTTTTTTTTTT')
+    mlflow.set_tracking_uri(tracking_uri)
     
     # ----------------------------------------------------------------------------
     # ADDED: Turn on MLflow autologging for PyTorch
@@ -57,58 +62,60 @@ def main():
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
-    model.train()
-    for epoch in range(epochs):
-        for images, labels in train_loader:
-            images, labels = images.to(device), labels.to(device)
-            optimizer.zero_grad()
-            outputs = model(images)
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
+    # Ensure we are *in* an MLflow run while training
+    with mlflow.start_run(run_name="tennis_court_training"):
+        model.train()
+        for epoch in range(epochs):
+            for images, labels in train_loader:
+                images, labels = images.to(device), labels.to(device)
+                optimizer.zero_grad()
+                outputs = model(images)
+                loss = criterion(outputs, labels)
+                loss.backward()
+                optimizer.step()
 
-        print(f"Epoch {epoch+1}/{epochs} complete.")
+            print(f"Epoch {epoch+1}/{epochs} complete.")
 
-    # Validation
-    model.eval()
-    all_preds, all_labels = [], []
-    with torch.no_grad():
-        for images, labels in val_loader:
-            images = images.to(device)
-            outputs = model(images)
-            preds = outputs.argmax(dim=1).cpu().numpy()
-            all_preds.extend(preds)
-            all_labels.extend(labels.numpy())
+        # Validation
+        model.eval()
+        all_preds, all_labels = [], []
+        with torch.no_grad():
+            for images, labels in val_loader:
+                images = images.to(device)
+                outputs = model(images)
+                preds = outputs.argmax(dim=1).cpu().numpy()
+                all_preds.extend(preds)
+                all_labels.extend(labels.numpy())
 
-    accuracy = accuracy_score(all_labels, all_preds)
-    recall   = recall_score(all_labels, all_preds, average="binary", pos_label=1)
-    print("Validation Accuracy:", accuracy)
-    print("Validation Recall:", recall)
+        accuracy = accuracy_score(all_labels, all_preds)
+        recall   = recall_score(all_labels, all_preds, average="binary", pos_label=1)
+        print("Validation Accuracy:", accuracy)
+        print("Validation Recall:", recall)
 
-    # Save metrics to the model dir for reference, though MLflow autologging also captures them.
-    metrics = {"accuracy": accuracy, "recall": recall}
-    metrics_path = os.path.join(model_dir, "metrics.json")
-    with open(metrics_path, "w") as f:
-        json.dump(metrics, f)
-    print(f"Metrics saved to {metrics_path}")
+        # Log final val metrics:
+        mlflow.log_metrics({"accuracy": accuracy, "recall": recall})
 
-    # Save the model
-    model_path = os.path.join(model_dir, "model.pth")
-    torch.save(model.state_dict(), model_path)
-    print(f"Model saved to {model_path}")
+        # Save metrics to the model dir for reference, though MLflow autologging also captures them.
+        metrics = {"accuracy": accuracy, "recall": recall}
+        metrics_path = os.path.join(model_dir, "metrics.json")
+        with open(metrics_path, "w") as f:
+            json.dump(metrics, f)
+        print(f"Metrics saved to {metrics_path}")
 
-    # ----------------------------------------------------------------------------
-    # OPTIONAL: If you want to register the model in MLflow's registry for best practices:
-    # ----------------------------------------------------------------------------
-    registered_model_name = os.environ.get("MLFLOW_MODEL_NAME", "TennisCourtDetectionModel")
-    with mlflow.start_run():   
-        # log_model can automatically register if you specify 'registered_model_name'
+        # Save the model
+        model_path = os.path.join(model_dir, "model.pth")
+        torch.save(model.state_dict(), model_path)
+        print(f"Model saved to {model_path}")
+
+        # ----------------------------------------------------------------------------
+        # OPTIONAL: If you want to register the model in MLflow's registry for best practices:
+        # ----------------------------------------------------------------------------
+        registered_model_name = os.environ.get("MLFLOW_MODEL_NAME", "TennisCourtDetectionModel")
         mlflow.pytorch.log_model(
             pytorch_model=model,
             artifact_path="model",
             registered_model_name=registered_model_name
         )
-        mlflow.log_metrics({"accuracy": accuracy, "recall": recall})
 
 if __name__ == "__main__":
     main() 
