@@ -28,15 +28,17 @@ def main():
     
     mlflow.set_tracking_uri(tracking_arn)
 
+    # Use the training image that was built and pushed by GitHub Actions
+    image_tag = os.getenv('GITHUB_SHA', 'latest')
+    custom_image_uri = f"{os.getenv('AWS_ACCOUNT_ID')}.dkr.ecr.{region}.amazonaws.com/{os.getenv('ECR_REPOSITORY')}:train-{image_tag}"
+
     # Create a PyTorch Estimator (adjust the framework version, instance_type, etc. if needed)
     estimator = PyTorch(
         entry_point='train.py',
-        # source_dir='docker/training',
         source_dir='.',
         role=role,
         sagemaker_session=sm_session,
-        framework_version='2.0.0',
-        py_version='py310',
+        image_uri=custom_image_uri,
         instance_count=1,
         instance_type='ml.m5.xlarge',
         hyperparameters={
