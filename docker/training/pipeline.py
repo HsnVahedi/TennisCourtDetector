@@ -8,17 +8,18 @@ def main():
     # Retrieve environment variables/secrets
     role = os.getenv('SAGE_MAKER_EXECUTION_ROLE')
     region = os.getenv('AWS_REGION', 'us-east-2')
-    print('--------------------------------')
-    print('--------------------------------')
-    print('--------------------------------')
-    print('--------------------------------')
-    print(f"Region: {region}")
-    print('--------------------------------')
-    print('--------------------------------')
-    print('--------------------------------')
-    print('--------------------------------')
     bucket = os.getenv('S3_BUCKET')
     tracking_arn = os.getenv('MLFLOW_TRACKING_ARN', '')
+    ecr_registry = os.getenv('ECR_REGISTRY')
+    ecr_repository = os.getenv('ECR_REPOSITORY')
+    github_sha = os.getenv('GITHUB_SHA', 'latest')
+
+    # if not all([role, region, bucket, ecr_registry, ecr_repository]):
+    #     raise ValueError(
+    #         "Missing required environment variables. Please ensure all required "
+    #         "environment variables are set: SAGE_MAKER_EXECUTION_ROLE, AWS_REGION, "
+    #         "S3_BUCKET, ECR_REGISTRY, ECR_REPOSITORY"
+    #     )
 
     # Example: using environment variables for dataset version
     data_version = os.getenv('DATA_VERSION', '1')
@@ -29,8 +30,7 @@ def main():
     mlflow.set_tracking_uri(tracking_arn)
 
     # Use the training image that was built and pushed by GitHub Actions
-    image_tag = os.getenv('GITHUB_SHA', 'latest')
-    custom_image_uri = f"{os.getenv('AWS_ACCOUNT_ID')}.dkr.ecr.{region}.amazonaws.com/{os.getenv('ECR_REPOSITORY')}:train-{image_tag}"
+    custom_image_uri = f"{ecr_registry}/{ecr_repository}:train-{github_sha}"
 
     # Create a PyTorch Estimator (adjust the framework version, instance_type, etc. if needed)
     estimator = PyTorch(
