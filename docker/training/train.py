@@ -20,9 +20,8 @@ def main():
     # ADDED: MLflow tracking URI from environment (provided by GitHub actions or the Docker environment).
     # If 'MLFLOW_TRACKING_ARN' is set in the environment, we can pass it to mlflow.set_tracking_uri(...).
     # ----------------------------------------------------------------------------
-    tracking_arn = os.environ.get("MLFLOW_TRACKING_ARN", "")
-    if tracking_arn:
-        mlflow.set_tracking_uri(tracking_arn)
+    s3_tracking_uri = os.environ.get("MLFLOW_S3_BUCKET")
+    mlflow.set_tracking_uri(s3_tracking_uri)
     
     # ----------------------------------------------------------------------------
     # ADDED: Turn on MLflow autologging for PyTorch
