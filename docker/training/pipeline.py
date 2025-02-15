@@ -22,7 +22,7 @@ def main():
     #     )
 
     # Example: using environment variables for dataset version
-    data_version = '1'
+    data_version = '2'
     
     # Set up the SageMaker session
     sm_session = sagemaker.Session(boto_session=boto3.Session(region_name=region))
