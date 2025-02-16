@@ -30,8 +30,8 @@ def main():
 
     train_data_dir = os.environ.get("SM_CHANNEL_TRAIN", "/opt/ml/input/data/train")
     val_data_dir   = os.environ.get("SM_CHANNEL_VALIDATION", "/opt/ml/input/data/validation")
-    output_dir     = os.environ.get("SM_OUTPUT_DATA_DIR", "/opt/ml/output")
-    model_dir      = os.environ.get("SM_MODEL_DIR", "/opt/ml/model")
+    # output_dir     = os.environ.get("SM_OUTPUT_DATA_DIR", "/opt/ml/output")
+    # model_dir      = os.environ.get("SM_MODEL_DIR", "/opt/ml/model")
 
     transform = T.Compose([
         T.Resize((224, 224)),
@@ -58,15 +58,15 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     # Ensure we are *in* an MLflow run while training
-    with mlflow.start_run(run_name="tennis_court_training") as run:
+    with mlflow.start_run(run_name="tennis-court-training") as run:
         # Get the run ID
         run_id = run.info.run_id
         
         # Save run ID to a file in the model directory
-        run_id_path = os.path.join(model_dir, "run_id.txt")
-        with open(run_id_path, "w") as f:
-            f.write(run_id)
-        print(f"MLflow run ID saved to {run_id_path}")
+        # run_id_path = os.path.join(model_dir, "run_id.txt")
+        # with open(run_id_path, "w") as f:
+            # f.write(run_id)
+        # print(f"MLflow run ID saved to {run_id_path}")
         
         model.train()
         for epoch in range(epochs):
@@ -100,16 +100,16 @@ def main():
         mlflow.log_metrics({"accuracy": accuracy, "recall": recall})
 
         # Save metrics to the model dir for reference, though MLflow autologging also captures them.
-        metrics = {"accuracy": accuracy, "recall": recall}
-        metrics_path = os.path.join(model_dir, "metrics.json")
-        with open(metrics_path, "w") as f:
-            json.dump(metrics, f)
-        print(f"Metrics saved to {metrics_path}")
+        # metrics = {"accuracy": accuracy, "recall": recall}
+        # metrics_path = os.path.join(model_dir, "metrics.json")
+        # with open(metrics_path, "w") as f:
+        #     json.dump(metrics, f)
+        # print(f"Metrics saved to {metrics_path}")
 
         # Save the model
-        model_path = os.path.join(model_dir, "model.pth")
-        torch.save(model.state_dict(), model_path)
-        print(f"Model saved to {model_path}")
+        # model_path = os.path.join(model_dir, "model.pth")
+        # torch.save(model.state_dict(), model_path)
+        # print(f"Model saved to {model_path}")
 
         # ----------------------------------------------------------------------------
         # OPTIONAL: If you want to register the model in MLflow's registry for best practices:

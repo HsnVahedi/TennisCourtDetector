@@ -79,6 +79,6 @@ jobs:
             ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:pipeline-${{ github.sha }} \
             conda run -n pipeline-env python /opt/ml/code/pipeline.py
 
-      - name: Upload Run ID to S3
-        run: |
-          aws s3 cp /opt/ml/model/run_id.txt s3://${{ secrets.S3_BUCKET }}/run_ids/${{ github.sha }}_run_id.txt
+      # - name: Upload Run ID to S3
+      #   run: |
+      #     aws s3 cp /opt/ml/model/run_id.txt s3://${{ secrets.S3_BUCKET }}/run_ids/${{ github.sha }}_run_id.txt
