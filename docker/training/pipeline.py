@@ -13,7 +13,7 @@ def main():
     ecr_registry = os.getenv('ECR_REGISTRY')
     ecr_repository = os.getenv('ECR_REPOSITORY')
     github_sha = os.getenv('GITHUB_SHA', 'latest')
-    run_id = os.getenv('MLFLOW_RUN_ID')
+    # run_id = os.getenv('MLFLOW_RUN_ID')
 
     if not all([role, region, bucket, ecr_registry, ecr_repository, tracking_arn]):
         raise ValueError(
@@ -22,8 +22,8 @@ def main():
             "S3_BUCKET, ECR_REGISTRY, ECR_REPOSITORY, MLFLOW_TRACKING_ARN"
         )
 
-    if not run_id:
-        raise ValueError("MLFLOW_RUN_ID environment variable is required")
+    # if not run_id:
+    #     raise ValueError("MLFLOW_RUN_ID environment variable is required")
 
     # Example: using environment variables for dataset version
     data_version = '2'
@@ -71,22 +71,22 @@ def main():
     )
 
     # Get the model URI from MLflow
-    model_uri = f"runs:/{run_id}/model"
+    # model_uri = f"runs:/{run_id}/model"
     
     # Load the model from MLflow
-    model = mlflow.sagemaker.Model(
-        model_uri=model_uri,
-        role=role,
-        image_uri=custom_image_uri,
-        sagemaker_session=sm_session
-    )
+    # model = mlflow.sagemaker.Model(
+    #     model_uri=model_uri,
+    #     role=role,
+    #     image_uri=custom_image_uri,
+    #     sagemaker_session=sm_session
+    # )
 
     # Deploy the model
-    predictor = model.deploy(
-        initial_instance_count=1,
-        instance_type='ml.m5.large',
-        endpoint_name=preview_endpoint_name
-    )
+    # predictor = model.deploy(
+    #     initial_instance_count=1,
+    #     instance_type='ml.m5.large',
+    #     endpoint_name=preview_endpoint_name
+    # )
 
 if __name__ == '__main__':
     main() 
