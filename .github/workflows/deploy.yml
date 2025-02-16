@@ -47,7 +47,7 @@ jobs:
               \"VariantName\":\"AllTraffic\",
               \"ModelName\":\"$PROD_MODEL_NAME\",
               \"InitialInstanceCount\":1,
-              \"InstanceType\":\"ml.m5.xlarge\"
+              \"InstanceType\":\"ml.t2.medium\"
             }]"
 
           # If endpoint doesn't exist, create it

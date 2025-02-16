@@ -1,7 +1,7 @@
 name: PreviewAction
 
 on:
-  push:
+  pull_request:
     branches: [ "preview" ]
 
 jobs:
@@ -10,6 +10,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}  # Checkout the PR's source branch
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -21,113 +23,38 @@ jobs:
       - name: Build and Push Docker Images
         uses: ./.github/workflows/build_and_push_docker.yml
 
-      - name: Launch SageMaker Training Job
+      - name: Build preview pipeline container
         run: |
-          # Example of using AWS CLI to start a training job
-          # Assume dataset-version is an input or environment variable
-          # If you want dataset-version from the commit message or something else, handle accordingly.
+          docker build \
+            -t preview-pipeline-docker \
+            -f docker/training/PipelineDockerfile \
+            .
 
-          TRAIN_IMAGE_URI="${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:train-${{ github.sha }}"
-          TIMESTAMP=$(date +%s)
-          JOB_NAME="tennis-court-detection-train-${TIMESTAMP}"
-
-          aws sagemaker create-training-job \
-            --training-job-name $JOB_NAME \
-            --algorithm-specification TrainingImage=$TRAIN_IMAGE_URI,TrainingInputMode=File \
-            --role-arn ${{ secrets.SAGE_MAKER_EXECUTION_ROLE }} \
-            --input-data-config '[ 
-              {
-                "ChannelName": "train", 
-                "DataSource": {
-                  "S3DataSource": {
-                    "S3DataType": "S3Prefix",
-                    "S3Uri": "s3://${{ secrets.S3_BUCKET }}/datasets/version'$DATA_VERSION'/train/",
-                    "S3DataDistributionType": "FullyReplicated"
-                  }
-                }
-              },
-              {
-                "ChannelName": "validation",
-                "DataSource": {
-                  "S3DataSource": {
-                    "S3DataType": "S3Prefix",
-                    "S3Uri": "s3://${{ secrets.S3_BUCKET }}/datasets/version'$DATA_VERSION'/validation/",
-                    "S3DataDistributionType": "FullyReplicated"
-                  }
-                }
-              }
-            ]' \
-            --output-data-config S3OutputPath=s3://${{ secrets.S3_BUCKET }}/output/ \
-            --resource-config '{"InstanceType":"ml.m5.xlarge","InstanceCount":1,"VolumeSizeInGB":50}' \
-            --stopping-condition '{"MaxRuntimeInSeconds":3600}' \
-            --hyper-parameters '{"epochs":"5","batch_size":"32"}' \
-            --tags Key=GitCommit,Value='${{ github.sha }}' Key=Branch,Value='${{ github.ref_name }}'
-      
-      - name: Wait for Training Job Completion
+      - name: Run Preview Pipeline Container
+        env:
+          S3_BUCKET: ${{ secrets.S3_BUCKET }}
+          SAGE_MAKER_EXECUTION_ROLE: ${{ secrets.SAGE_MAKER_EXECUTION_ROLE }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ steps.configure-aws-credentials.outputs.aws_session_token }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          MLFLOW_TRACKING_ARN: ${{ secrets.MLFLOW_TRACKING_ARN }}
+          ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+          GITHUB_SHA: ${{ github.sha }}
+          SOURCE_BRANCH: ${{ github.event.pull_request.head.ref }}
         run: |
-          # Poll until the job is completed
-          aws sagemaker wait training-job-completed-or-stopped --training-job-name $JOB_NAME
-      
-      - name: Capture & Store Training Metrics in SageMaker Experiments
-        run: |
-          # If your container writes metrics to CloudWatch or to a file in S3, you can fetch them.
-          # For illustration, let's assume we have a JSON file with metrics in S3 like:
-          # s3://${{ secrets.S3_BUCKET }}/output/${JOB_NAME}/metrics.json
-          # We'll fetch that file, parse it, and create a trial component with the metrics
-          
-          aws s3 cp s3://${{ secrets.S3_BUCKET }}/output/${JOB_NAME}/metrics.json ./metrics.json
-
-          ACCURACY=$(jq -r '.accuracy' metrics.json)
-          RECALL=$(jq -r '.recall' metrics.json)
-
-          # Create or Update a Trial Component in SageMaker
-          COMPONENT_NAME="TrainComponent-${JOB_NAME}"
-          EXPERIMENT_NAME="TennisCourtDetectionExperiment"
-          TRIAL_NAME="TrainTrial-${{ github.ref_name }}-${{ github.sha }}"
-
-          # Create Experiment if not exist (no harm if it exists)
-          aws sagemaker create-experiment --experiment-name $EXPERIMENT_NAME || true
-
-          # Create Trial if not exist
-          aws sagemaker create-trial --trial-name $TRIAL_NAME --experiment-name $EXPERIMENT_NAME --role-arn ${{ secrets.SAGE_MAKER_EXECUTION_ROLE }} || true
-
-          # Create a trial component for this training step
-          aws sagemaker create-trial-component \
-            --trial-component-name $COMPONENT_NAME \
-            --display-name "Training Step" \
-            --status 'PrimaryStatus=Completed,Message=TrainingCompleted' \
-            --parameters '{"accuracy":"'$ACCURACY'","recall":"'$RECALL'"}'
-
-          # Associate it with the trial
-          aws sagemaker associate-trial-component --trial-name $TRIAL_NAME --trial-component-name $COMPONENT_NAME 
-
-      - name: Create SageMaker Model for Preview
-        run: |
-          # Use the training output artifact from your job
-          JOB_NAME="tennis-court-detection-train-..." # same name used above
-          MODEL_DATA_URL="s3://${{ secrets.S3_BUCKET }}/output/${JOB_NAME}/output/model.tar.gz"
-          INFER_IMAGE_URI="${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:infer-${{ github.sha }}"
-          MODEL_NAME="tennis-court-preview-model-${{ github.sha }}"
-
-          aws sagemaker create-model \
-            --model-name $MODEL_NAME \
-            --primary-container Image=$INFER_IMAGE_URI,ModelDataUrl=$MODEL_DATA_URL \
-            --execution-role-arn ${{ secrets.SAGE_MAKER_EXECUTION_ROLE }}
-
-      - name: Create Batch Transform Job
-        run: |
-          BATCH_JOB_NAME="tennis-court-preview-batch-${{ github.sha }}"
-          MODEL_NAME="tennis-court-preview-model-${{ github.sha }}"
-          TRANSFORM_INPUT="s3://${{ secrets.S3_BUCKET }}/preview-tests/input/"
-          TRANSFORM_OUTPUT="s3://${{ secrets.S3_BUCKET }}/preview-tests/output/${{ github.sha }}/"
-
-          aws sagemaker create-transform-job \
-            --transform-job-name $BATCH_JOB_NAME \
-            --model-name $MODEL_NAME \
-            --batch-strategy MultiRecord \
-            --transform-input DataSource="{\"S3DataSource\":{\"S3DataType\":\"S3Prefix\",\"S3Uri\":\"$TRANSFORM_INPUT\"}}" \
-            --transform-output S3OutputPath=$TRANSFORM_OUTPUT \
-            --transform-resources '{"InstanceType":"ml.m5.xlarge","InstanceCount":1}'
-
-          # Wait for job to complete
-          aws sagemaker wait transform-job-completed-or-stopped --transform-job-name $BATCH_JOB_NAME
+          docker run --rm \
+            -e S3_BUCKET \
+            -e SAGE_MAKER_EXECUTION_ROLE \
+            -e AWS_ACCESS_KEY_ID \
+            -e AWS_SECRET_ACCESS_KEY \
+            -e AWS_SESSION_TOKEN \
+            -e AWS_REGION \
+            -e MLFLOW_TRACKING_ARN \
+            -e ECR_REGISTRY \
+            -e ECR_REPOSITORY \
+            -e GITHUB_SHA \
+            -e SOURCE_BRANCH \
+            preview-pipeline-docker \
+            conda run -n pipeline-env python /opt/ml/code/preview_pipeline.py
