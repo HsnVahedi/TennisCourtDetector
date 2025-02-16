@@ -87,6 +87,7 @@ def main():
         model_artifact = f"s3://{s3_bucket}/{model_artifact_key}"
         print(f"Uploaded compressed model to: {model_artifact}")
 
+
     # Create a PyTorch Model with the compressed model artifact
     model = PyTorchModel(
         model_data=model_artifact,
