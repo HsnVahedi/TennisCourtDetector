@@ -70,18 +70,29 @@ def main():
         }
     )
 
-    # Get the model URI from MLflow
-    # model_uri = f"runs:/{run_id}/model"
+    # Get the most recent MLflow run for this experiment
+    runs = mlflow.search_runs(
+        filter_string="tags.mlflow.runName = 'tennis-court-training'",
+        order_by=["start_time DESC"],
+        max_results=1
+    )
     
-    # Load the model from MLflow
+    if len(runs) == 0:
+        raise Exception("No MLflow run found")
+        
+    run_id = runs.iloc[0].run_id
+    print(f"Retrieved MLflow run ID: {run_id}")
+
+    # Now you can use the run_id for model deployment
+    model_uri = f"runs:/{run_id}/model"
+    
+    # Deploy the model
     # model = mlflow.sagemaker.Model(
     #     model_uri=model_uri,
     #     role=role,
     #     image_uri=custom_image_uri,
     #     sagemaker_session=sm_session
     # )
-
-    # Deploy the model
     # predictor = model.deploy(
     #     initial_instance_count=1,
     #     instance_type='ml.m5.large',

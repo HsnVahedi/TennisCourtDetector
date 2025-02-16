@@ -62,12 +62,6 @@ def main():
         # Get the run ID
         run_id = run.info.run_id
         
-        # Save run ID to a file in the model directory
-        # run_id_path = os.path.join(model_dir, "run_id.txt")
-        # with open(run_id_path, "w") as f:
-            # f.write(run_id)
-        # print(f"MLflow run ID saved to {run_id_path}")
-        
         model.train()
         for epoch in range(epochs):
             for images, labels in train_loader:
@@ -98,18 +92,6 @@ def main():
 
         # Log final val metrics:
         mlflow.log_metrics({"accuracy": accuracy, "recall": recall})
-
-        # Save metrics to the model dir for reference, though MLflow autologging also captures them.
-        # metrics = {"accuracy": accuracy, "recall": recall}
-        # metrics_path = os.path.join(model_dir, "metrics.json")
-        # with open(metrics_path, "w") as f:
-        #     json.dump(metrics, f)
-        # print(f"Metrics saved to {metrics_path}")
-
-        # Save the model
-        # model_path = os.path.join(model_dir, "model.pth")
-        # torch.save(model.state_dict(), model_path)
-        # print(f"Model saved to {model_path}")
 
         # ----------------------------------------------------------------------------
         # OPTIONAL: If you want to register the model in MLflow's registry for best practices:
