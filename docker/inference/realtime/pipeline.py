@@ -31,8 +31,25 @@ def main():
     # Use the inference image that was built and pushed by GitHub Actions
     inference_image_uri = f"{ecr_registry}/{ecr_repository}:inference-{github_sha}"
 
-    # Get the model artifact from the training job that ran on the source branch
-    model_artifact = f"s3://{bucket}/models/{source_branch}/model.tar.gz"
+
+    # Get the most recent MLflow run for this experiment
+    runs = mlflow.search_runs(
+        filter_string="tags.mlflow.runName = 'tennis-court-training'",
+        order_by=["start_time DESC"],
+        max_results=1
+    )
+    
+    if len(runs) == 0:
+        raise Exception("No MLflow run found")
+        
+    run_id = runs.iloc[0].run_id
+    print(f"Retrieved MLflow run ID: {run_id}")
+
+    # Get the model artifact location from MLflow
+    client = mlflow.tracking.MlflowClient()
+    artifact_uri = client.get_run(run_id).info.artifact_uri
+    model_artifact = f"{artifact_uri}/model.tar.gz"
+    print(f"Using model artifact from: {model_artifact}")
 
     # Create a PyTorch Model
     model = PyTorchModel(

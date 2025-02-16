@@ -68,20 +68,7 @@ def main():
             'train': train_prefix,
             'validation': val_prefix
         }
-    )
-
-    # Get the most recent MLflow run for this experiment
-    runs = mlflow.search_runs(
-        filter_string="tags.mlflow.runName = 'tennis-court-training'",
-        order_by=["start_time DESC"],
-        max_results=1
-    )
-    
-    if len(runs) == 0:
-        raise Exception("No MLflow run found")
-        
-    run_id = runs.iloc[0].run_id
-    print(f"Retrieved MLflow run ID: {run_id}")
+    ) 
 
     # Now you can use the run_id for model deployment
     model_uri = f"runs:/{run_id}/model"
