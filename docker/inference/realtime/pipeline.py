@@ -48,7 +48,7 @@ def main():
     # Get the model artifact location from MLflow
     client = mlflow.tracking.MlflowClient()
     artifact_uri = client.get_run(run_id).info.artifact_uri
-    model_artifact = f"{artifact_uri}/model.tar.gz"
+    model_artifact = f"{artifact_uri}/model/MLmodel"
     print(f"Using model artifact from: {model_artifact}")
 
     # Create a PyTorch Model
