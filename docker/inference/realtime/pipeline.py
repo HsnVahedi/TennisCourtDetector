@@ -29,7 +29,7 @@ def main():
         mlflow.set_tracking_uri(tracking_arn)
 
     # Use the inference image that was built and pushed by GitHub Actions
-    inference_image_uri = f"{ecr_registry}/{ecr_repository}:infer-{github_sha}"
+    inference_image_uri = f"{ecr_registry}/{ecr_repository}:inference-{github_sha}"
 
     # Get the model artifact from the training job that ran on the source branch
     model_artifact = f"s3://{bucket}/models/{source_branch}/model.tar.gz"
