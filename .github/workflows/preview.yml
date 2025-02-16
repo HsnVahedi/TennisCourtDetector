@@ -2,16 +2,19 @@ name: PreviewAction
 
 on:
   pull_request:
+    types: [closed]
     branches: [ "preview" ]
 
 jobs:
   preview:
+    # Only run this job if the PR was merged (not just closed)
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
         with:
-          ref: ${{ github.event.pull_request.head.sha }}  # Checkout the PR's source branch
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
