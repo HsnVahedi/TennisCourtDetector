@@ -32,7 +32,7 @@ jobs:
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws_region: ${{ secrets.AWS_REGION }}
           inference_image: ${{ secrets.ECR_REPOSITORY }}:inference-${{ github.sha }}
-          pipeline_image: ${{ secrets.ECR_REPOSITORY }}:pipeline-${{ github.sha }}
+          pipeline_image: ${{ secrets.ECR_REPOSITORY }}:realtime-inference-pipeline-${{ github.sha }}
 
       # - name: Build preview pipeline container
       #   run: |
@@ -67,5 +67,5 @@ jobs:
             -e ECR_REPOSITORY \
             -e GITHUB_SHA \
             -e SOURCE_BRANCH \
-            ${{ secrets.ECR_REPOSITORY }}:pipeline-${{ github.sha }} \
+            ${{ secrets.ECR_REPOSITORY }}:realtime-inference-pipeline-${{ github.sha }} \
             conda run -n pipeline-env python /opt/ml/code/pipeline.py
