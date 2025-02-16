@@ -9,17 +9,17 @@ def main():
     role = os.getenv('SAGE_MAKER_EXECUTION_ROLE')
     region = os.getenv('AWS_REGION', 'us-east-2')
     bucket = os.getenv('S3_BUCKET')
-    tracking_arn = os.getenv('MLFLOW_TRACKING_ARN', '')
+    tracking_arn = os.getenv('MLFLOW_TRACKING_ARN')
     ecr_registry = os.getenv('ECR_REGISTRY')
     ecr_repository = os.getenv('ECR_REPOSITORY')
     github_sha = os.getenv('GITHUB_SHA', 'latest')
 
-    # if not all([role, region, bucket, ecr_registry, ecr_repository]):
-    #     raise ValueError(
-    #         "Missing required environment variables. Please ensure all required "
-    #         "environment variables are set: SAGE_MAKER_EXECUTION_ROLE, AWS_REGION, "
-    #         "S3_BUCKET, ECR_REGISTRY, ECR_REPOSITORY"
-    #     )
+    if not all([role, region, bucket, ecr_registry, ecr_repository, tracking_arn]):
+        raise ValueError(
+            "Missing required environment variables. Please ensure all required "
+            "environment variables are set: SAGE_MAKER_EXECUTION_ROLE, AWS_REGION, "
+            "S3_BUCKET, ECR_REGISTRY, ECR_REPOSITORY, MLFLOW_TRACKING_ARN"
+        )
 
     # Example: using environment variables for dataset version
     data_version = '2'
