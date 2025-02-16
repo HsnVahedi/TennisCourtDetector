@@ -59,20 +59,20 @@ def main():
     print(f"Real-time preview endpoint deployed and available at: {predictor.endpoint_name}")
 
     # Create and run a batch transform job
-    print("Setting up batch transform job...")
+    # print("Setting up batch transform job...")
     
-    transformer = model.transformer(
-        instance_count=1,
-        instance_type='ml.m5.large',
-        output_path=f"s3://{bucket}/preview-tests/output/{github_sha}/",
-        strategy='MultiRecord',
-        max_concurrent_transforms=1,
-        use_spot_instances=True,  # Enable spot instances for transform jobs
-        max_run=7200,
-        max_wait=9000,
-    )
+    # transformer = model.transformer(
+    #     instance_count=1,
+    #     instance_type='ml.m5.large',
+    #     output_path=f"s3://{bucket}/preview-tests/output/{github_sha}/",
+    #     strategy='MultiRecord',
+    #     max_concurrent_transforms=1,
+    #     use_spot_instances=True,  # Enable spot instances for transform jobs
+    #     max_run=7200,
+    #     max_wait=9000,
+    # )
 
-    print(f"Starting batch transform job for PR preview...")
+    # print(f"Starting batch transform job for PR preview...")
     
     # Run batch transformation
     # transformer.transform(
@@ -82,12 +82,12 @@ def main():
     # )
     
     # Wait for the transform job to complete
-    print("Waiting for batch transform job to complete...")
-    transformer.wait()
+    # print("Waiting for batch transform job to complete...")
+    # transformer.wait()
     
     print(f"Preview deployment complete!")
     print(f"Real-time endpoint available at: {predictor.endpoint_name}")
-    print(f"Batch transform results available at: s3://{bucket}/preview-tests/output/{github_sha}/")
+    # print(f"Batch transform results available at: s3://{bucket}/preview-tests/output/{github_sha}/")
 
     # Store endpoint info in a file that can be used by subsequent steps or PR comments
     endpoint_info = {
