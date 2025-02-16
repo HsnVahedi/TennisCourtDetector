@@ -71,7 +71,7 @@ def main():
     ) 
 
     # Now you can use the run_id for model deployment
-    model_uri = f"runs:/{run_id}/model"
+    # model_uri = f"runs:/{run_id}/model"
     
     # Deploy the model
     # model = mlflow.sagemaker.Model(
