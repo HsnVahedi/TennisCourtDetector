@@ -48,16 +48,21 @@ def main():
     # Get the model artifact location from MLflow
     client = mlflow.tracking.MlflowClient()
     artifact_uri = client.get_run(run_id).info.artifact_uri
-    model_artifact = f"{artifact_uri}/model.tar.gz/data"
+    model_artifact = f"{artifact_uri}/model.tar.gz/"
     print(f"Using model artifact from: {model_artifact}")
 
-    # Create a PyTorch Model
+    # Download the model locally
+    local_model_path = "/tmp/model.tar.gz"
+    client.download_artifacts(run_id, "model.tar.gz", local_model_path)
+    print(f"Downloaded model to: {local_model_path}")
+
+    # Create a PyTorch Model with the local path
     model = PyTorchModel(
-        model_data=model_artifact,
+        model_data=local_model_path,  # Use the local path directly
         role=role,
         image_uri=inference_image_uri,
         sagemaker_session=sm_session,
-        framework_version='2.0.1',  # Adjust based on your PyTorch version
+        framework_version='2.0.1',
     )
 
     # Create a preview endpoint configuration name
