@@ -52,7 +52,8 @@ def main():
     print(f"Using model artifact from: {model_artifact}")
 
     # Download the model locally
-    local_model_path = "/tmp/model.tar.gz"
+    # local_model_path = "/tmp/model.tar.gz"
+    local_model_path = "./"
     client.download_artifacts(run_id, "model.tar.gz", local_model_path)
     print(f"Downloaded model to: {local_model_path}")
 
