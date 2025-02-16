@@ -48,10 +48,10 @@ jobs:
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
           | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
 
-      - name: Get Training Run ID
-        run: |
-          aws s3 cp s3://${{ secrets.S3_BUCKET }}/run_ids/${{ github.sha }}_run_id.txt run_id.txt
-          echo "MLFLOW_RUN_ID=$(cat run_id.txt)" >> $GITHUB_ENV
+      # - name: Get Training Run ID
+      #   run: |
+      #     aws s3 cp s3://${{ secrets.S3_BUCKET }}/run_ids/${{ github.sha }}_run_id.txt run_id.txt
+      #     echo "MLFLOW_RUN_ID=$(cat run_id.txt)" >> $GITHUB_ENV
 
       - name: Run Preview Pipeline Container
         env:
