@@ -40,7 +40,7 @@ def main():
         sagemaker_session=sm_session,
         image_uri=custom_image_uri,
         instance_count=1,
-        instance_type='ml.t3.medium',
+        instance_type='ml.t3.large',
         hyperparameters={
             'epochs': '5',
             'batch_size': '32'

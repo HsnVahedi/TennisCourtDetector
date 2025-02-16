@@ -51,7 +51,7 @@ def main():
     # Deploy the model to a preview endpoint
     predictor = model.deploy(
         initial_instance_count=1,
-        instance_type='ml.t3.medium',
+        instance_type='ml.t3.large',
         endpoint_name=preview_endpoint_name,
         wait=True
     )
@@ -63,7 +63,7 @@ def main():
     
     transformer = model.transformer(
         instance_count=1,
-        instance_type='ml.t3.medium',
+        instance_type='ml.t3.large',
         output_path=f"s3://{bucket}/preview-tests/output/{github_sha}/",
         strategy='MultiRecord'  # Adjust based on your needs
     )
