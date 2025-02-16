@@ -51,15 +51,9 @@ def main():
     model_artifact = f"{artifact_uri}/model.tar.gz/"
     print(f"Using model artifact from: {model_artifact}")
 
-    # Download the model locally
-    # local_model_path = "/tmp/model.tar.gz"
-    local_model_path = "./"
-    client.download_artifacts(run_id, "model.tar.gz", local_model_path)
-    print(f"Downloaded model to: {local_model_path}")
-
-    # Create a PyTorch Model with the local path
+    # Create a PyTorch Model directly with the S3 path
     model = PyTorchModel(
-        model_data=local_model_path,  # Use the local path directly
+        model_data=model_artifact,
         role=role,
         image_uri=inference_image_uri,
         sagemaker_session=sm_session,
