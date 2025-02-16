@@ -1,0 +1,29 @@
+# Use a Miniconda base image (CPU-based).
+FROM continuumio/miniconda3:latest
+
+# Create a conda environment (named "pipeline-env"; rename as desired).
+RUN conda create --yes --name pipeline-env python=3.9
+
+# Switch shell to the new conda environment for subsequent commands.
+SHELL ["conda", "run", "-n", "pipeline-env", "/bin/bash", "-c"]
+
+# Install necessary Python packages for your pipeline
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir \
+        sagemaker \
+        mlflow-skinny==2.13.2 \
+        sagemaker-mlflow==0.1.0
+
+# Create a directory to hold your pipeline script.
+RUN mkdir -p /opt/ml/code
+
+# Copy over pipeline scripts
+COPY docker/training/pipeline.py /opt/ml/code/pipeline.py
+COPY docker/training/preview_pipeline.py /opt/ml/code/preview_pipeline.py
+COPY docker/training/train.py /opt/ml/code/train.py
+
+WORKDIR /opt/ml/code
+
+# We won't set ENTRYPOINT here to allow more flexibility when we run it.
+# You can optionally do:
+# ENTRYPOINT ["python", "/opt/ml/code/pipeline.py"]

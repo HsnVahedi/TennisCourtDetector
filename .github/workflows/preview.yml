@@ -21,7 +21,7 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Build and Push Docker Images
-        uses: ./.github/workflows/build_and_push_docker.yml
+        uses: ./.github/actions/preview/build-and-push
 
       - name: Build preview pipeline container
         run: |

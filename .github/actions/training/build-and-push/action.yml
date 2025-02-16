@@ -17,6 +17,12 @@ inputs:
   aws_region:
     description: "AWS region"
     required: true
+  training_image:
+    description: "Training image"
+    required: true
+  pipeline_image:
+    description: "Training Pipeline image"
+    required: true
 
 runs:
   using: "composite"

@@ -21,25 +21,26 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Build and Push Docker Images
-        uses: ./.github/actions/build-and-push
+        uses: ./.github/actions/training/build-and-push
         with:
           ecr_registry: ${{ secrets.ECR_REGISTRY }}
           ecr_repository: ${{ secrets.ECR_REPOSITORY }}
           aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws_region: ${{ secrets.AWS_REGION }}
-
+          training_image: ${{ secrets.ECR_REPOSITORY }}:train-${{ github.sha }}
+          pipeline_image: ${{ secrets.ECR_REPOSITORY }}:pipeline-${{ github.sha }}
       # ----------------------------------------------------------------
       # BUILD the pipeline container locally (optional), if you want to run 
       # it directly in this workflow. Alternatively, you can re-use the 
       # ECR push if your build-and-push action already handles pipeline logic.
       # ----------------------------------------------------------------
-      - name: Build pipeline container
-        run: |
-          docker build \
-            -t pipeline-docker \
-            -f docker/training/PipelineDockerfile \
-            .
+      # - name: Build pipeline container
+      #   run: |
+      #     docker build \
+      #       -t pipeline-docker \
+      #       -f docker/training/PipelineDockerfile \
+      #       .
 
       # ----------------------------------------------------------------
       # RUN the pipeline container, passing environment variables for Sagemaker
@@ -68,5 +69,5 @@ jobs:
             -e ECR_REGISTRY \
             -e ECR_REPOSITORY \
             -e GITHUB_SHA \
-            pipeline-docker \
+            ${{ secrets.ECR_REPOSITORY }}:pipeline-${{ github.sha }} \
             conda run -n pipeline-env python /opt/ml/code/pipeline.py
