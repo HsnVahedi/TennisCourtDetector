@@ -4,6 +4,10 @@ import mlflow
 from sagemaker.pytorch import PyTorchModel
 import boto3
 import json
+import tempfile
+import shutil
+import tarfile
+from urllib.parse import urlparse
 
 def main():
     # Retrieve environment variables/secrets
@@ -48,10 +52,42 @@ def main():
     # Get the model artifact location from MLflow
     client = mlflow.tracking.MlflowClient()
     artifact_uri = client.get_run(run_id).info.artifact_uri
-    model_artifact = f"{artifact_uri}/model.tar.gz/"
-    print(f"Using model artifact from: {model_artifact}")
+    model_path = f"{artifact_uri}/model"
+    print(f"Original model artifact path: {model_path}")
 
-    # Create a PyTorch Model directly with the S3 path
+    # Create a temporary directory for processing
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Download the model files from S3
+        parsed_uri = urlparse(model_path)
+        s3_bucket = parsed_uri.netloc
+        s3_key = parsed_uri.path.lstrip('/')
+        
+        s3_client = boto3.client('s3')
+        local_model_path = os.path.join(temp_dir, 'model')
+        os.makedirs(local_model_path)
+        
+        # Download all files from the model directory
+        paginator = s3_client.get_paginator('list_objects_v2')
+        for page in paginator.paginate(Bucket=s3_bucket, Prefix=s3_key):
+            for obj in page.get('Contents', []):
+                key = obj['Key']
+                local_file = os.path.join(temp_dir, os.path.relpath(key, os.path.dirname(s3_key)))
+                os.makedirs(os.path.dirname(local_file), exist_ok=True)
+                s3_client.download_file(s3_bucket, key, local_file)
+
+        # Create tar.gz archive
+        archive_path = os.path.join(temp_dir, 'model.tar.gz')
+        with tarfile.open(archive_path, 'w:gz') as tar:
+            tar.add(local_model_path, arcname='.')
+
+        # Upload the tar.gz to S3
+        model_artifact_key = f"{os.path.dirname(s3_key)}/model.tar.gz"
+        s3_client.upload_file(archive_path, s3_bucket, model_artifact_key)
+        
+        model_artifact = f"s3://{s3_bucket}/{model_artifact_key}"
+        print(f"Uploaded compressed model to: {model_artifact}")
+
+    # Create a PyTorch Model with the compressed model artifact
     model = PyTorchModel(
         model_data=model_artifact,
         role=role,
