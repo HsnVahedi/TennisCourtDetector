@@ -2,8 +2,9 @@ name: TrainAction
 
 on:
   push:
-    branches: 
-      - '**'  # This pattern matches all branches, including those with slashes
+    branches-ignore: 
+      - 'main'
+      - 'preview'
 
 jobs:
   train:
