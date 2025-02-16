@@ -51,7 +51,7 @@ def main():
     # Deploy the model to a preview endpoint
     predictor = model.deploy(
         initial_instance_count=1,
-        instance_type='ml.t3.large',
+        instance_type='ml.m5.large',
         endpoint_name=preview_endpoint_name,
         wait=True
     )
@@ -63,9 +63,12 @@ def main():
     
     transformer = model.transformer(
         instance_count=1,
-        instance_type='ml.t3.large',
+        instance_type='ml.m5.large',
         output_path=f"s3://{bucket}/preview-tests/output/{github_sha}/",
-        strategy='MultiRecord'  # Adjust based on your needs
+        strategy='MultiRecord',
+        max_concurrent_transforms=1,
+        use_spot_instances=True,  # Enable spot instances for transform jobs
+        max_wait=3600  # Maximum time to wait for spot instances (in seconds)
     )
 
     print(f"Starting batch transform job for PR preview...")

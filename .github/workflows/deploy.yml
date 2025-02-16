@@ -47,7 +47,10 @@ jobs:
               \"VariantName\":\"AllTraffic\",
               \"ModelName\":\"$PROD_MODEL_NAME\",
               \"InitialInstanceCount\":1,
-              \"InstanceType\":\"ml.t3.large\"
+              \"InstanceType\":\"ml.m5.large\",
+              \"InstanceMetadataOptions\": {
+                \"SpotInstanceEnabled\": true
+              }
             }]"
 
           # If endpoint doesn't exist, create it
