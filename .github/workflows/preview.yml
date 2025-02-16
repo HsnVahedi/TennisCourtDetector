@@ -48,6 +48,11 @@ jobs:
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
           | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
 
+      - name: Get Training Run ID
+        run: |
+          aws s3 cp s3://${{ secrets.S3_BUCKET }}/run_ids/${{ github.sha }}_run_id.txt run_id.txt
+          echo "MLFLOW_RUN_ID=$(cat run_id.txt)" >> $GITHUB_ENV
+
       - name: Run Preview Pipeline Container
         env:
           S3_BUCKET: ${{ secrets.S3_BUCKET }}
@@ -61,6 +66,7 @@ jobs:
           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
           GITHUB_SHA: ${{ github.sha }}
           SOURCE_BRANCH: ${{ github.event.pull_request.head.ref }}
+          MLFLOW_RUN_ID: ${{ env.MLFLOW_RUN_ID }}
         run: |
           docker run --rm \
             -e S3_BUCKET \
@@ -74,5 +80,6 @@ jobs:
             -e ECR_REPOSITORY \
             -e GITHUB_SHA \
             -e SOURCE_BRANCH \
+            -e MLFLOW_RUN_ID \
             ${{ secrets.ECR_REPOSITORY }}:realtime-inference-pipeline-${{ github.sha }} \
             conda run -n pipeline-env python /opt/ml/code/pipeline.py

@@ -58,7 +58,16 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     # Ensure we are *in* an MLflow run while training
-    with mlflow.start_run(run_name="tennis_court_training"):
+    with mlflow.start_run(run_name="tennis_court_training") as run:
+        # Get the run ID
+        run_id = run.info.run_id
+        
+        # Save run ID to a file in the model directory
+        run_id_path = os.path.join(model_dir, "run_id.txt")
+        with open(run_id_path, "w") as f:
+            f.write(run_id)
+        print(f"MLflow run ID saved to {run_id_path}")
+        
         model.train()
         for epoch in range(epochs):
             for images, labels in train_loader:
