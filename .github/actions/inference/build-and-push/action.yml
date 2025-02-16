@@ -70,7 +70,7 @@ runs:
     - name: Build Pipeline Image
       shell: bash
       run: |
-        docker build -t ${{ inputs.pipeline_image }} -f docker/training/PipelineDockerfile .
+        docker build -t ${{ inputs.pipeline_image }} -f docker/inference/realtime/PipelineDockerfile .
         docker tag ${{ inputs.pipeline_image }} \
           ${{ inputs.ecr_registry }}/${{ inputs.pipeline_image }}
 
