@@ -68,7 +68,8 @@ def main():
         strategy='MultiRecord',
         max_concurrent_transforms=1,
         use_spot_instances=True,  # Enable spot instances for transform jobs
-        max_wait=3600  # Maximum time to wait for spot instances (in seconds)
+        max_run=7200,
+        max_wait=9000,
     )
 
     print(f"Starting batch transform job for PR preview...")

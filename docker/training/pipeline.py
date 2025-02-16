@@ -42,7 +42,8 @@ def main():
         instance_count=1,
         instance_type='ml.m5.large',
         use_spot_instances=True,
-        max_wait=7200,
+        max_run=7200,
+        max_wait=9000,
         hyperparameters={
             'epochs': '5',
             'batch_size': '32'
