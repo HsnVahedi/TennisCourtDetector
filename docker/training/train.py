@@ -99,7 +99,7 @@ def main():
         registered_model_name = os.environ.get("MLFLOW_MODEL_NAME", "TennisCourtDetectionModel")
         mlflow.pytorch.log_model(
             pytorch_model=model,
-            artifact_path="model",
+            artifact_path="model.tar.gz",
             registered_model_name=registered_model_name
         )
 
