@@ -76,5 +76,5 @@ jobs:
             -e ECR_REGISTRY \
             -e ECR_REPOSITORY \
             -e GITHUB_SHA \
-            ${{ secrets.ECR_REPOSITORY }}:pipeline-${{ github.sha }} \
+            ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:pipeline-${{ github.sha }} \
             conda run -n pipeline-env python /opt/ml/code/pipeline.py

@@ -46,23 +46,35 @@ runs:
     - name: Build Training Image
       shell: bash
       run: |
-        docker build -t ${{ inputs.ecr_repository }}:train-${{ github.sha }} -f docker/training/Dockerfile .
-        docker tag ${{ inputs.ecr_repository }}:train-${{ github.sha }} \
-          ${{ inputs.ecr_registry }}/${{ inputs.ecr_repository }}:train-${{ github.sha }}
+        docker build -t ${{ inputs.training_image }} -f docker/training/Dockerfile .
+        docker tag ${{ inputs.training_image }} \
+          ${{ inputs.ecr_registry }}/${{ inputs.training_image }}
 
     - name: Push Training Image
       shell: bash
       run: |
-        docker push ${{ inputs.ecr_registry }}/${{ inputs.ecr_repository }}:train-${{ github.sha }}
+        docker push ${{ inputs.ecr_registry }}/${{ inputs.training_image }}
 
-    - name: Build Inference Image
+    # - name: Build Inference Image
+    #   shell: bash
+    #   run: |
+    #     docker build -t ${{ inputs.ecr_repository }}:infer-${{ github.sha }} -f docker/inference/Dockerfile .
+    #     docker tag ${{ inputs.ecr_repository }}:infer-${{ github.sha }} \
+    #       ${{ inputs.ecr_registry }}/${{ inputs.ecr_repository }}:infer-${{ github.sha }}
+
+    # - name: Push Inference Image
+    #   shell: bash
+    #   run: |
+    #     docker push ${{ inputs.ecr_registry }}/${{ inputs.ecr_repository }}:infer-${{ github.sha }}
+
+    - name: Build Pipeline Image
       shell: bash
       run: |
-        docker build -t ${{ inputs.ecr_repository }}:infer-${{ github.sha }} -f docker/inference/Dockerfile .
-        docker tag ${{ inputs.ecr_repository }}:infer-${{ github.sha }} \
-          ${{ inputs.ecr_registry }}/${{ inputs.ecr_repository }}:infer-${{ github.sha }}
+        docker build -t ${{ inputs.pipeline_image }} -f docker/training/PipelineDockerfile .
+        docker tag ${{ inputs.pipeline_image }} \
+          ${{ inputs.ecr_registry }}/${{ inputs.pipeline_image }}
 
-    - name: Push Inference Image
+    - name: Push Pipeline Image
       shell: bash
       run: |
-        docker push ${{ inputs.ecr_registry }}/${{ inputs.ecr_repository }}:infer-${{ github.sha }} 
+        docker push ${{ inputs.ecr_registry }}/${{ inputs.pipeline_image }} 
