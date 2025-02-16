@@ -12,7 +12,7 @@ from sklearn.metrics import accuracy_score, recall_score
 
 def main():
     # Example hyperparameters might be read from environment or script arguments
-    epochs = int(os.environ.get("epochs", 200))
+    epochs = int(os.environ.get("epochs", 20))
     batch_size = int(os.environ.get("batch_size", 4))
     learning_rate = 0.001
 

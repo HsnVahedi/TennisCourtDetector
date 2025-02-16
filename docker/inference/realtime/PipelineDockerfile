@@ -19,7 +19,7 @@ RUN mkdir -p /opt/ml/code
 
 # Copy over pipeline scripts
 COPY docker/training/pipeline.py /opt/ml/code/pipeline.py
-# COPY docker/training/preview_pipeline.py /opt/ml/code/preview_pipeline.py
+COPY docker/training/preview_pipeline.py /opt/ml/code/preview_pipeline.py
 COPY docker/training/train.py /opt/ml/code/train.py
 
 WORKDIR /opt/ml/code
