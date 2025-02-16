@@ -42,6 +42,13 @@ jobs:
       #       -f docker/training/PipelineDockerfile \
       #       .
 
+
+      - name: Log into Amazon ECR
+        shell: bash
+        run: |
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
+          | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
+
       # ----------------------------------------------------------------
       # RUN the pipeline container, passing environment variables for Sagemaker
       # ----------------------------------------------------------------
