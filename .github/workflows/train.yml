@@ -6,6 +6,10 @@ on:
       - 'main'
       - 'preview'
 
+concurrency:
+  group: my-workflow-queue
+  cancel-in-progress: false
+
 jobs:
   train:
     runs-on: ubuntu-latest
