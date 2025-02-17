@@ -56,6 +56,7 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Build and Push Docker Images
+        if: steps.check_runs.outputs.can_run == 'true'
         uses: ./.github/actions/training/build-and-push
         with:
           ecr_registry: ${{ secrets.ECR_REGISTRY }}
