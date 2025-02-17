@@ -94,7 +94,7 @@ def main():
         role=role,
         image_uri=inference_image_uri,
         sagemaker_session=sm_session,
-        framework_version='2.0.1',
+        # framework_version='2.0.1',
     )
 
     # Create a preview endpoint configuration name
