@@ -21,7 +21,7 @@ RUN pip install torch torchvision pillow mlflow multi-model-server sagemaker-inf
 # Copy your inference script
 # COPY docker/inference/realtime/inference.py /opt/ml/code/inference.py
 # COPY docker/inference/realtime/handler_service.py /opt/ml/code/handler_service.py
-COPY docker/inference/realtime/entrypoint.py /opt/ml/code/entrypoint.py
+COPY docker/inference/realtime/entrypoint.py /opt/ml/code/inference.py
 
 # (Optional) environment variables so sagemaker-inference knows which script to run:
 ENV SAGEMAKER_PROGRAM=inference.py \
@@ -29,5 +29,5 @@ ENV SAGEMAKER_PROGRAM=inference.py \
 
 EXPOSE 8080
 
-ENTRYPOINT ["python", "/opt/ml/code/entrypoint.py"]
+ENTRYPOINT ["python", "/opt/ml/code/inference.py"]
 CMD ["serve"]
