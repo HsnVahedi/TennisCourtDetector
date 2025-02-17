@@ -17,7 +17,6 @@ jobs:
       - name: Wait 5 minutes before starting
         run: sleep 300  # 300 seconds = 5 minutes
 
-
       - name: Checkout Code
         uses: actions/checkout@v3
 
