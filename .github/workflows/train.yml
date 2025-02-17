@@ -10,10 +10,45 @@ jobs:
   train:
     runs-on: ubuntu-latest
     steps:
+      # Step 1: Check how many runs in last 90 min
+      - name: Check recent runs
+        id: check_runs
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const now = new Date().getTime();
+            // List 30 runs (an arbitrary upper bound)
+            const runs = await github.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: "train.yml", // or the numeric ID
+              event: "push",
+              per_page: 30
+            });
+
+            let recentCount = 0;
+            for (const run of runs.data.workflow_runs) {
+              const createdTime = new Date(run.created_at).getTime();
+              // 90 minutes in milliseconds:
+              if (now - createdTime < 90 * 60 * 1000) {
+                recentCount++;
+              }
+            }
+
+            // If there are 2 or more in the last 90 min, skip or fail
+            if (recentCount >= 2) {
+              core.setOutput("can_run", "false");
+            } else {
+              core.setOutput("can_run", "true");
+            }
+
+      # Step 2: Conditionally run the real training only if allowed
       - name: Checkout Code
+        if: steps.check_runs.outputs.can_run == 'true'
         uses: actions/checkout@v3
 
       - name: Configure AWS Credentials
+        if: steps.check_runs.outputs.can_run == 'true'
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
