@@ -2,6 +2,8 @@ import os
 import sagemaker
 import mlflow
 from sagemaker.pytorch import PyTorchModel
+from sagemaker.serverless import ServerlessInferenceConfig
+
 import boto3
 import json
 import tempfile
