@@ -12,4 +12,6 @@ ENV SAGEMAKER_SUBMIT_DIRECTORY /opt/ml/code
 
 EXPOSE 8080
 
-ENTRYPOINT ["python", "-m", "sagemaker_inference"]
+# ENTRYPOINT ["python", "-m", "sagemaker_inference"]
+ENTRYPOINT ["python", "-m", "sagemaker_inference.toolkit"]
+CMD ["serve"]
