@@ -7,13 +7,17 @@ on:
       - 'preview'
 
 concurrency:
-  group: my-workflow-queue
+  group: training-queue
   cancel-in-progress: false
 
 jobs:
   train:
     runs-on: ubuntu-latest
     steps:
+      - name: Wait 5 minutes before starting
+        run: sleep 300  # 300 seconds = 5 minutes
+
+
       - name: Checkout Code
         uses: actions/checkout@v3
 
