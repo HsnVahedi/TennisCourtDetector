@@ -3,6 +3,12 @@ from sagemaker_inference.transformer import Transformer
 from sagemaker_inference import content_types, decoder, encoder
 import torch
 import logging
+import json
+import base64
+import io
+from PIL import Image
+import torchvision.transforms as T
+import mlflow
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -17,29 +23,37 @@ class SimpleInferenceHandler:
         return model
 
     def default_input_fn(self, request_body, request_content_type):
+        logger.info(f"Received request with content type: {request_content_type}")
         if request_content_type == 'application/json':
             data = json.loads(request_body)
             
-            # For example, expect {"image_data": "<base64 string>"}
+            # Log the keys received in the request
+            logger.info(f"Received data keys: {data.keys()}")
+            
             if "image_data" not in data:
-                raise ValueError("JSON request body must include 'image_data' key.")
+                raise ValueError("JSON request body must include 'image_data' key with base64 encoded image.")
             
-            # Decode base64 string into bytes
-            image_bytes = base64.b64decode(data["image_data"])
-            
-            # Convert bytes to a PIL image
-            image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-            
-            # Define the same image transforms you used in training
-            transform = T.Compose([
-                T.Resize((224, 224)),
-                T.ToTensor()
-            ])
-            
-            # Apply transforms and add batch dimension: shape (1, 3, 224, 224)
-            input_tensor = transform(image).unsqueeze(0)
-            
-            return input_tensor
+            try:
+                # Decode base64 string into bytes
+                image_bytes = base64.b64decode(data["image_data"])
+                
+                # Convert bytes to a PIL image
+                image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+                
+                # Define the same image transforms used in training
+                transform = T.Compose([
+                    T.Resize((224, 224)),
+                    T.ToTensor()
+                ])
+                
+                # Apply transforms and add batch dimension
+                input_tensor = transform(image).unsqueeze(0)
+                logger.info("Successfully processed image input")
+                return input_tensor
+                
+            except Exception as e:
+                logger.error(f"Error processing input: {str(e)}")
+                raise
         else:
             raise ValueError(f"Unsupported content type: {request_content_type}")
 
