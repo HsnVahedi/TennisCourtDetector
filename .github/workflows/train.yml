@@ -18,7 +18,7 @@ jobs:
           script: |
             const now = new Date().getTime();
             // List 30 runs (an arbitrary upper bound)
-            const runs = await github.actions.listWorkflowRuns({
+            const runs = await github.rest.actions.listWorkflowRuns({
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: "train.yml", // or the numeric ID
