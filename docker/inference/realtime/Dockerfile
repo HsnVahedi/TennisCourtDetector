@@ -1,9 +1,12 @@
 FROM continuumio/miniconda3:latest
 RUN conda install -y pip
-RUN pip install torch torchvision pillow mlflow sagemaker-inference
+RUN pip install torch torchvision pillow mlflow multi-model-server sagemaker-inference
+RUN pip3 install multi-model-server sagemaker-inference
 
 # Copy your inference script
 COPY docker/inference/realtime/inference.py /opt/ml/code/inference.py
+COPY docker/inference/realtime/handler_service.py /opt/ml/code/handler_service.py
+COPY docker/inference/realtime/entrypoint.py /opt/ml/code/entrypoint.py
 
 # (Optional) environment variables so sagemaker-inference
 # knows which script to run:
@@ -13,5 +16,5 @@ ENV SAGEMAKER_SUBMIT_DIRECTORY /opt/ml/code
 EXPOSE 8080
 
 # ENTRYPOINT ["python", "-m", "sagemaker_inference"]
-ENTRYPOINT ["python", "-m", "sagemaker_inference.toolkit"]
+ENTRYPOINT ["python", "/opt/ml/code/entrypoint.py"]
 CMD ["serve"]
