@@ -3,7 +3,7 @@ RUN conda install -y pip
 RUN pip install torch torchvision pillow mlflow sagemaker-inference
 
 # Copy your inference script
-COPY inference.py /opt/ml/code/inference.py
+COPY docker/inference/realtime/inference.py /opt/ml/code/inference.py
 
 # (Optional) environment variables so sagemaker-inference
 # knows which script to run:
