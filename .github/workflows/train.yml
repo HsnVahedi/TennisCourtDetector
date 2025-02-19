@@ -53,8 +53,8 @@ jobs:
           aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws_region: ${{ secrets.AWS_REGION }}
-          training_image: ${{ secrets.ECR_REPOSITORY }}:train
-          pipeline_image: ${{ secrets.ECR_REPOSITORY }}:pipeline
+          training_image: ${{ secrets.ECR_REPOSITORY }}-train
+          pipeline_image: ${{ secrets.ECR_REPOSITORY }}-pipeline
           image_tag: ${{ github.sha }}
           docker_changed: ${{ steps.validate_changes.outputs.docker == 'true' }}
 
@@ -135,7 +135,7 @@ jobs:
             -e ECR_REGISTRY \
             -e ECR_REPOSITORY \
             -e GITHUB_SHA \
-            ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:pipeline:latest \
+            ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}-pipeline:latest \
             conda run -n pipeline-env python /opt/ml/code/pipeline.py
 
 
