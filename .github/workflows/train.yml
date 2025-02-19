@@ -26,6 +26,14 @@ jobs:
             docker:
               - 'docker/training/**'
 
+  debug:
+    needs: filter-changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Debug docker_changed value
+        run: |
+          echo "docker_changed value from filter-changes: ${{ needs.filter-changes.outputs.docker_changed }}"
+
   train:
     needs: filter-changes
     runs-on: ubuntu-latest
@@ -52,11 +60,7 @@ jobs:
           training_image: ${{ secrets.ECR_REPOSITORY }}:train
           pipeline_image: ${{ secrets.ECR_REPOSITORY }}:pipeline
           image_tag: ${{ github.sha }}
-          docker_changed: ${{ needs.filter-changes.outputs.docker_changed }}
-
-      - name: Debug docker_changed value
-        run: |
-          echo "docker_changed value from filter-changes: ${{ needs.filter-changes.outputs.docker_changed }}"
+          docker_changed: ${{ needs.filter-changes.outputs.docker_changed }} 
 
       - name: Log into Amazon ECR
         shell: bash
