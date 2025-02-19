@@ -49,8 +49,10 @@ jobs:
           aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws_region: ${{ secrets.AWS_REGION }}
-          training_image: ${{ secrets.ECR_REPOSITORY }}:train-${{ github.sha }}
-          pipeline_image: ${{ secrets.ECR_REPOSITORY }}:pipeline-${{ github.sha }}
+          training_image: ${{ secrets.ECR_REPOSITORY }}:train
+          pipeline_image: ${{ secrets.ECR_REPOSITORY }}:pipeline
+          image_tag: ${{ github.sha }}
+          docker_changed: ${{ needs.filter-changes.outputs.docker_changed }}
       # ----------------------------------------------------------------
       # BUILD the pipeline container locally (optional), if you want to run 
       # it directly in this workflow. Alternatively, you can re-use the 

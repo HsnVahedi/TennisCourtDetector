@@ -23,6 +23,13 @@ inputs:
   pipeline_image:
     description: "Training Pipeline image"
     required: true
+  image_tag:
+    description: "Image tag"
+    required: true
+  docker_changed:
+    description: "Boolean indicating if docker files have changed"
+    required: true
+    default: 'false'
 
 runs:
   using: "composite"
@@ -38,22 +45,28 @@ runs:
         aws-region: ${{ inputs.aws_region }}
 
     - name: Log into Amazon ECR
+      if: inputs.docker_changed == 'true'
       shell: bash
       run: |
         aws ecr get-login-password --region ${{ inputs.aws_region }} \
         | docker login --username AWS --password-stdin ${{ inputs.ecr_registry }}
 
     - name: Build Training Image
+      if: inputs.docker_changed == 'true'
       shell: bash
       run: |
-        docker build -t ${{ inputs.training_image }} -f docker/training/Dockerfile .
-        docker tag ${{ inputs.training_image }} \
-          ${{ inputs.ecr_registry }}/${{ inputs.training_image }}
+        docker build -t ${{ inputs.training_image }}:${{ inputs.image_tag }} -f docker/training/Dockerfile .
+        docker tag ${{ inputs.training_image }}:${{ inputs.image_tag }} \
+          ${{ inputs.ecr_registry }}/${{ inputs.training_image }}:${{ inputs.image_tag }}
+        docker tag ${{ inputs.training_image }}:${{ inputs.image_tag }} \
+          ${{ inputs.ecr_registry }}/${{ inputs.training_image }}:latest
 
     - name: Push Training Image
+      if: inputs.docker_changed == 'true'
       shell: bash
       run: |
-        docker push ${{ inputs.ecr_registry }}/${{ inputs.training_image }}
+        docker push ${{ inputs.ecr_registry }}/${{ inputs.training_image }}:${{ inputs.image_tag }}
+        docker push ${{ inputs.ecr_registry }}/${{ inputs.training_image }}:latest
 
     # - name: Build Inference Image
     #   shell: bash
@@ -68,13 +81,18 @@ runs:
     #     docker push ${{ inputs.ecr_registry }}/${{ inputs.ecr_repository }}:infer-${{ github.sha }}
 
     - name: Build Pipeline Image
+      if: inputs.docker_changed == 'true'
       shell: bash
       run: |
-        docker build -t ${{ inputs.pipeline_image }} -f docker/training/PipelineDockerfile .
-        docker tag ${{ inputs.pipeline_image }} \
-          ${{ inputs.ecr_registry }}/${{ inputs.pipeline_image }}
+        docker build -t ${{ inputs.pipeline_image }}:${{ inputs.image_tag }} -f docker/training/PipelineDockerfile .
+        docker tag ${{ inputs.pipeline_image }}:${{ inputs.image_tag }} \
+          ${{ inputs.ecr_registry }}/${{ inputs.pipeline_image }}:${{ inputs.image_tag }}
+        docker tag ${{ inputs.pipeline_image }}:${{ inputs.image_tag }} \
+          ${{ inputs.ecr_registry }}/${{ inputs.pipeline_image }}:latest
 
     - name: Push Pipeline Image
+      if: inputs.docker_changed == 'true'
       shell: bash
       run: |
-        docker push ${{ inputs.ecr_registry }}/${{ inputs.pipeline_image }} 
+        docker push ${{ inputs.ecr_registry }}/${{ inputs.pipeline_image }}:${{ inputs.image_tag }}
+        docker push ${{ inputs.ecr_registry }}/${{ inputs.pipeline_image }}:latest 
