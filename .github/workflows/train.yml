@@ -74,9 +74,9 @@ jobs:
       # TODO: Use github secrets and environment variables instead of hardcoding
       # region, tracking server name, etc.
       # Start MLFlow Tracking Server
-      - name: Start MLFlow Tracking Server
-        run: |
-          aws sagemaker start-mlflow-tracking-server --tracking-server-name MLFlowTracking --region us-west-2
+      # - name: Start MLFlow Tracking Server
+      #   run: |
+      #     aws sagemaker start-mlflow-tracking-server --tracking-server-name MLFlowTracking --region us-west-2
 
       # ----------------------------------------------------------------
       # RUN the pipeline container, passing environment variables for Sagemaker
@@ -112,9 +112,9 @@ jobs:
       # TODO: Use github secrets and environment variables instead of hardcoding
       # region, tracking server name, etc.
       # Start MLFlow Tracking Server
-      - name: Stop MLFlow Tracking Server
-        run: |
-          aws sagemaker stop-mlflow-tracking-server --tracking-server-name MLFlowTracking --region us-west-2
+      # - name: Stop MLFlow Tracking Server
+      #   run: |
+      #     aws sagemaker stop-mlflow-tracking-server --tracking-server-name MLFlowTracking --region us-west-2
 
       # - name: Upload Run ID to S3
       #   run: |
