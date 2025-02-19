@@ -34,7 +34,7 @@ def main():
     mlflow.set_tracking_uri(tracking_arn)
 
     # Use the training image that was built and pushed by GitHub Actions
-    custom_image_uri = f"{ecr_registry}/{ecr_repository}:train-{github_sha}"
+    custom_image_uri = f"{ecr_registry}/{ecr_repository}:train:latest"
 
     # Create a PyTorch Estimator (adjust the framework version, instance_type, etc. if needed)
     estimator = PyTorch(
