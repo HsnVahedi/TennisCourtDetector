@@ -9,6 +9,8 @@ import torchvision
 import torchvision.transforms as T
 from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score, recall_score
+import time
+from mlflow.exceptions import RestException
 
 def main():
     # Example hyperparameters might be read from environment or script arguments
@@ -93,15 +95,28 @@ def main():
         # Log final val metrics:
         mlflow.log_metrics({"accuracy": accuracy, "recall": recall})
 
-        # ----------------------------------------------------------------------------
-        # OPTIONAL: If you want to register the model in MLflow's registry for best practices:
-        # ----------------------------------------------------------------------------
-        registered_model_name = os.environ.get("MLFLOW_MODEL_NAME", "TennisCourtDetectionModel")
-        mlflow.pytorch.log_model(
-            pytorch_model=model,
-            artifact_path="model",
-            registered_model_name=registered_model_name
-        )
+        # Modified model registration with retries
+        max_retries = 10
+        retry_delay = 30  # seconds
+        
+        for attempt in range(max_retries):
+            try:
+                registered_model_name = os.environ.get("MLFLOW_MODEL_NAME", "TennisCourtDetectionModel")
+                mlflow.pytorch.log_model(
+                    pytorch_model=model,
+                    artifact_path="model",
+                    registered_model_name=registered_model_name
+                )
+                print(f"Successfully registered model on attempt {attempt + 1}")
+                break
+            except RestException as e:
+                if attempt < max_retries - 1:
+                    print(f"Attempt {attempt + 1} failed. Retrying in {retry_delay} seconds...")
+                    print(f"Error: {str(e)}")
+                    time.sleep(retry_delay)
+                else:
+                    print(f"Failed to register model after {max_retries} attempts")
+                    raise
 
 if __name__ == "__main__":
     main() 
