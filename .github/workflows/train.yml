@@ -15,7 +15,7 @@ jobs:
   filter-changes:
     runs-on: ubuntu-latest
     outputs:
-      docker_changed: ${{ steps.validate_docker.outputs.changes }}
+      docker_changed: ${{ steps.validate_docker.outputs.docker }}
     steps:
       - uses: actions/checkout@v3
       - name: Check if Docker changed
