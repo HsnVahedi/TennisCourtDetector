@@ -15,26 +15,29 @@ jobs:
   filter-changes:
     runs-on: ubuntu-latest
     outputs:
-      docker_changed: ${{ steps.validate_docker.outputs.docker }}
+      docker_changed: ${{ steps.validate_changes.outputs.docker }}
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0  # fetch entire history so changes can be compared
       - name: Check if Docker changed
-        id: validate_docker
-        uses: dorny/paths-filter@v2
+        id: validate_changes
+        uses: dorny/paths-filter@v3
         with:
           filters: |
             docker:
               - 'docker/training/**'
-
-  debug:
-    needs: filter-changes
-    runs-on: ubuntu-latest
-    steps:
       - name: Debug docker_changed value
         run: |
-          echo "docker_changed value from filter-changes: ${{ needs.filter-changes.outputs.docker_changed }}"
+          echo "docker_changed value from filter-changes: ${{ steps.validate_changes.outputs.docker == 'true' }}"
+
+  # debug:
+  #   needs: filter-changes
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Debug docker_changed value
+  #       run: |
+  #         echo "docker_changed value from filter-changes: ${{ needs.filter-changes.outputs.docker_changed }}"
 
   train:
     needs: filter-changes
