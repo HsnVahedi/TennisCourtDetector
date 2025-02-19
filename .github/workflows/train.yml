@@ -93,11 +93,13 @@ jobs:
 
             if [ "$IS_ACTIVE" == "Active" ]; then
               echo "MLflow server is already active."
+              echo "Waiting additional 90 seconds for server stability..."
+              sleep 90
               break
             else
               echo "MLflow server not active. Attempting to start it..."
               if ! aws sagemaker start-mlflow-tracking-server --tracking-server-name "$TRACKING_SERVER_NAME" --region ${{ secrets.AWS_REGION }}; then
-                echo "Warning: Failed to start MLflow server. Will retry in 30 seconds..."
+                echo "Warning: Failed to start MLflow server. Will retry in 90 seconds..."
               fi
             fi
 
