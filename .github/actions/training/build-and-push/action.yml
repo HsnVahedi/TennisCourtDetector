@@ -44,6 +44,11 @@ runs:
         aws-secret-access-key: ${{ inputs.aws_secret_access_key }}
         aws-region: ${{ inputs.aws_region }}
 
+    - name: Log docker_changed input
+      shell: bash
+      run: |
+        echo "docker_changed input value: ${{ inputs.docker_changed }}"
+
     - name: Log into Amazon ECR
       if: inputs.docker_changed == 'true'
       shell: bash

@@ -53,18 +53,10 @@ jobs:
           pipeline_image: ${{ secrets.ECR_REPOSITORY }}:pipeline
           image_tag: ${{ github.sha }}
           docker_changed: ${{ needs.filter-changes.outputs.docker_changed }}
-      # ----------------------------------------------------------------
-      # BUILD the pipeline container locally (optional), if you want to run 
-      # it directly in this workflow. Alternatively, you can re-use the 
-      # ECR push if your build-and-push action already handles pipeline logic.
-      # ----------------------------------------------------------------
-      # - name: Build pipeline container
-      #   run: |
-      #     docker build \
-      #       -t pipeline-docker \
-      #       -f docker/training/PipelineDockerfile \
-      #       .
 
+      - name: Debug docker_changed value
+        run: |
+          echo "docker_changed value from filter-changes: ${{ needs.filter-changes.outputs.docker_changed }}"
 
       - name: Log into Amazon ECR
         shell: bash
