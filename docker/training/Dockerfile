@@ -19,7 +19,6 @@ RUN pip install --no-cache-dir --upgrade pip && \
       pandas \
       tqdm \
       requests \
-      # added libraries for MLflow usage:
       mlflow-skinny==2.13.2 \
       sagemaker-mlflow==0.1.0 \
       ipykernel
