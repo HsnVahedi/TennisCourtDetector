@@ -54,6 +54,14 @@ jobs:
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
           | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
 
+
+      # TODO: Use github secrets and environment variables instead of hardcoding
+      # region, tracking server name, etc.
+      # Start MLFlow Tracking Server
+      - name: Start MLFlow Tracking Server
+        run: |
+          aws sagemaker start-mlflow-tracking-server --tracking-server-name MLFlowTracking --region us-west-2
+
       # ----------------------------------------------------------------
       # RUN the pipeline container, passing environment variables for Sagemaker
       # ----------------------------------------------------------------
@@ -83,6 +91,14 @@ jobs:
             -e GITHUB_SHA \
             ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:pipeline-${{ github.sha }} \
             conda run -n pipeline-env python /opt/ml/code/pipeline.py
+
+
+      # TODO: Use github secrets and environment variables instead of hardcoding
+      # region, tracking server name, etc.
+      # Start MLFlow Tracking Server
+      - name: Stop MLFlow Tracking Server
+        run: |
+          aws sagemaker stop-mlflow-tracking-server --tracking-server-name MLFlowTracking --region us-west-2
 
       # - name: Upload Run ID to S3
       #   run: |
