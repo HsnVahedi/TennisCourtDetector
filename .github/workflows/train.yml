@@ -67,7 +67,7 @@ jobs:
   #         echo "docker_changed value from filter-changes: ${{ needs.filter-changes.outputs.docker_changed }}"
 
   train:
-    # needs: filter-changes
+    needs: build-and-push
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
