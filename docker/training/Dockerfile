@@ -22,7 +22,6 @@ RUN pip install --no-cache-dir --upgrade pip && \
       sagemaker-mlflow==0.1.0 \
       ipykernel
 
-
 # Create a directory to hold your training script(s).
 RUN mkdir -p /opt/ml/code
 
