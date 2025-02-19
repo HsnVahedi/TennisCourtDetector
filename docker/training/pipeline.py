@@ -59,7 +59,6 @@ def main():
         }
     )
 
-    # Example channel mapping from your existing workflow:
     train_prefix = f's3://{bucket}/datasets/{data_version}/training/'
     val_prefix   = f's3://{bucket}/datasets/{data_version}/validation/'
 
