@@ -26,7 +26,7 @@ def main():
     #     raise ValueError("MLFLOW_RUN_ID environment variable is required")
 
     # Example: using environment variables for dataset version
-    data_version = '2'
+    data_version = '4'
     
     # Set up the SageMaker session
     sm_session = sagemaker.Session(boto_session=boto3.Session(region_name=region))
@@ -34,7 +34,7 @@ def main():
     mlflow.set_tracking_uri(tracking_arn)
 
     # Use the training image that was built and pushed by GitHub Actions
-    custom_image_uri = f"{ecr_registry}/{ecr_repository}:train-{github_sha}"
+    custom_image_uri = f"{ecr_registry}/{ecr_repository}/train:latest"
 
     # Create a PyTorch Estimator (adjust the framework version, instance_type, etc. if needed)
     estimator = PyTorch(
@@ -59,7 +59,6 @@ def main():
         }
     )
 
-    # Example channel mapping from your existing workflow:
     train_prefix = f's3://{bucket}/datasets/{data_version}/training/'
     val_prefix   = f's3://{bucket}/datasets/{data_version}/validation/'
 

@@ -6,12 +6,120 @@ on:
       - 'main'
       - 'preview'
 
+concurrency:
+  group: training-queue
+  cancel-in-progress: false
+
 jobs:
-  train:
+
+  build-and-push:
+    runs-on: ubuntu-latest
+    outputs:
+      docker_changed: ${{ steps.validate_changes.outputs.docker }}
+    steps:
+      # - uses: actions/checkout@v3
+      #   with:
+      #     fetch-depth: 0  # fetch entire history so changes can be compared
+      - name: Checkout Code
+        uses: actions/checkout@v3  
+
+      - name: Check if Docker changed
+        id: validate_changes
+        uses: dorny/paths-filter@v3
+        with:
+          base: ${{ github.ref }}
+          filters: |
+            docker:
+              - 'docker/training/**'
+      - name: Debug docker_changed value
+        run: |
+          echo "docker_changed value from filter-changes: ${{ steps.validate_changes.outputs.docker == 'true' }}"
+
+      
+
+
+      # - name: Configure AWS Credentials
+      #   uses: aws-actions/configure-aws-credentials@v2
+      #   with:
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Build and Push Docker Images
+        
+        uses: ./.github/actions/training/build-and-push
+        with:
+          ecr_registry: ${{ secrets.ECR_REGISTRY }}
+          ecr_repository: ${{ secrets.ECR_REPOSITORY }}
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_region: ${{ secrets.AWS_REGION }}
+          training_image: ${{ secrets.ECR_REPOSITORY }}/train
+          pipeline_image: ${{ secrets.ECR_REPOSITORY }}/pipeline
+          image_tag: ${{ github.sha }}
+          docker_changed: ${{ steps.validate_changes.outputs.docker == 'true' }}
+
+  check-mlflow-server:
+    needs: build-and-push
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+        
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      
+
+      - name: Check and start MLflow server if not active
+        shell: bash
+        env:
+          SERVER_ARN: ${{ secrets.MLFLOW_TRACKING_ARN }}
+        run: |
+          COUNTER=0
+          MAX_RETRIES=1000
+          TRACKING_SERVER_NAME="MLFlowTracking"
+
+          while [ $COUNTER -lt $MAX_RETRIES ]; do
+            echo "Listing MLflow tracking servers..."
+            OUTPUT=$(aws sagemaker list-mlflow-tracking-servers --region ${{ secrets.AWS_REGION }} || echo "Error listing servers")
+
+            # Extract the 'IsActive' status for the desired server ARN
+            IS_ACTIVE=$(echo "$OUTPUT" | jq -r ".TrackingServerSummaries[] | select(.TrackingServerArn==\"${SERVER_ARN}\") | .IsActive" || echo "Unknown")
+
+            if [ "$IS_ACTIVE" == "Active" ]; then
+              echo "MLflow server is already active."
+              echo "Waiting additional 90 seconds for server stability..."
+              sleep 90
+              break
+            else
+              echo "MLflow server not active. Attempting to start it..."
+              if ! aws sagemaker start-mlflow-tracking-server --tracking-server-name "$TRACKING_SERVER_NAME" --region ${{ secrets.AWS_REGION }}; then
+                echo "Warning: Failed to start MLflow server. Will retry in 90 seconds..."
+              fi
+            fi
+
+            COUNTER=$((COUNTER+1))
+            echo "Waiting for 90 seconds before checking again..."
+            sleep 90
+          done
+
+          if [ "$IS_ACTIVE" != "Active" ]; then
+            echo "Warning: MLflow server did not become active in time (${MAX_RETRIES} checks)."
+            echo "Continuing workflow despite MLflow server status..."
+          fi
+
+  train:
+    needs: [build-and-push, check-mlflow-server]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -20,38 +128,13 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Build and Push Docker Images
-        uses: ./.github/actions/training/build-and-push
-        with:
-          ecr_registry: ${{ secrets.ECR_REGISTRY }}
-          ecr_repository: ${{ secrets.ECR_REPOSITORY }}
-          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws_region: ${{ secrets.AWS_REGION }}
-          training_image: ${{ secrets.ECR_REPOSITORY }}:train-${{ github.sha }}
-          pipeline_image: ${{ secrets.ECR_REPOSITORY }}:pipeline-${{ github.sha }}
-      # ----------------------------------------------------------------
-      # BUILD the pipeline container locally (optional), if you want to run 
-      # it directly in this workflow. Alternatively, you can re-use the 
-      # ECR push if your build-and-push action already handles pipeline logic.
-      # ----------------------------------------------------------------
-      # - name: Build pipeline container
-      #   run: |
-      #     docker build \
-      #       -t pipeline-docker \
-      #       -f docker/training/PipelineDockerfile \
-      #       .
-
-
       - name: Log into Amazon ECR
         shell: bash
         run: |
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
           | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
 
-      # ----------------------------------------------------------------
-      # RUN the pipeline container, passing environment variables for Sagemaker
-      # ----------------------------------------------------------------
+
       - name: Run Sagemaker Pipeline Container
         env:
           S3_BUCKET: ${{ secrets.S3_BUCKET }}
@@ -76,9 +159,8 @@ jobs:
             -e ECR_REGISTRY \
             -e ECR_REPOSITORY \
             -e GITHUB_SHA \
-            ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:pipeline-${{ github.sha }} \
+            ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}/pipeline:latest \
             conda run -n pipeline-env python /opt/ml/code/pipeline.py
 
-      # - name: Upload Run ID to S3
-      #   run: |
-      #     aws s3 cp /opt/ml/model/run_id.txt s3://${{ secrets.S3_BUCKET }}/run_ids/${{ github.sha }}_run_id.txt
+
+
