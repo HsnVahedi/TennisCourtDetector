@@ -5,7 +5,6 @@ FROM continuumio/miniconda3:latest
 # Create a new conda environment.
 RUN conda create --yes --name tennis-court python=3.9
 
-# Switch your shell to the conda environment to install packages.
 SHELL ["conda", "run", "-n", "tennis-court", "/bin/bash", "-c"]
 
 # Install Python packages. Add or remove libraries as needed for your project.
@@ -19,7 +18,6 @@ RUN pip install --no-cache-dir --upgrade pip && \
       pandas \
       tqdm \
       requests \
-      # added libraries for MLflow usage:
       mlflow-skinny==2.13.2 \
       sagemaker-mlflow==0.1.0 \
       ipykernel

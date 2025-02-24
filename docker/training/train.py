@@ -9,10 +9,12 @@ import torchvision
 import torchvision.transforms as T
 from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score, recall_score
+import time
+from mlflow.exceptions import RestException
 
 def main():
     # Example hyperparameters might be read from environment or script arguments
-    epochs = int(os.environ.get("epochs", 200))
+    epochs = int(os.environ.get("epochs", 20))
     batch_size = int(os.environ.get("batch_size", 4))
     learning_rate = 0.001
 
@@ -30,8 +32,8 @@ def main():
 
     train_data_dir = os.environ.get("SM_CHANNEL_TRAIN", "/opt/ml/input/data/train")
     val_data_dir   = os.environ.get("SM_CHANNEL_VALIDATION", "/opt/ml/input/data/validation")
-    output_dir     = os.environ.get("SM_OUTPUT_DATA_DIR", "/opt/ml/output")
-    model_dir      = os.environ.get("SM_MODEL_DIR", "/opt/ml/model")
+    # output_dir     = os.environ.get("SM_OUTPUT_DATA_DIR", "/opt/ml/output")
+    # model_dir      = os.environ.get("SM_MODEL_DIR", "/opt/ml/model")
 
     transform = T.Compose([
         T.Resize((224, 224)),
@@ -58,7 +60,10 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     # Ensure we are *in* an MLflow run while training
-    with mlflow.start_run(run_name="tennis_court_training"):
+    with mlflow.start_run(run_name="tennis-court-training") as run:
+        # Get the run ID
+        run_id = run.info.run_id
+        
         model.train()
         for epoch in range(epochs):
             for images, labels in train_loader:
@@ -90,27 +95,28 @@ def main():
         # Log final val metrics:
         mlflow.log_metrics({"accuracy": accuracy, "recall": recall})
 
-        # Save metrics to the model dir for reference, though MLflow autologging also captures them.
-        metrics = {"accuracy": accuracy, "recall": recall}
-        metrics_path = os.path.join(model_dir, "metrics.json")
-        with open(metrics_path, "w") as f:
-            json.dump(metrics, f)
-        print(f"Metrics saved to {metrics_path}")
-
-        # Save the model
-        model_path = os.path.join(model_dir, "model.pth")
-        torch.save(model.state_dict(), model_path)
-        print(f"Model saved to {model_path}")
-
-        # ----------------------------------------------------------------------------
-        # OPTIONAL: If you want to register the model in MLflow's registry for best practices:
-        # ----------------------------------------------------------------------------
-        registered_model_name = os.environ.get("MLFLOW_MODEL_NAME", "TennisCourtDetectionModel")
-        mlflow.pytorch.log_model(
-            pytorch_model=model,
-            artifact_path="model",
-            registered_model_name=registered_model_name
-        )
+        # Modified model registration with retries
+        max_retries = 10
+        retry_delay = 30  # seconds
+        
+        for attempt in range(max_retries):
+            try:
+                registered_model_name = os.environ.get("MLFLOW_MODEL_NAME", "TennisCourtDetectionModel")
+                mlflow.pytorch.log_model(
+                    pytorch_model=model,
+                    artifact_path="model",
+                    registered_model_name=registered_model_name
+                )
+                print(f"Successfully registered model on attempt {attempt + 1}")
+                break
+            except RestException as e:
+                if attempt < max_retries - 1:
+                    print(f"Attempt {attempt + 1} failed. Retrying in {retry_delay} seconds...")
+                    print(f"Error: {str(e)}")
+                    time.sleep(retry_delay)
+                else:
+                    print(f"Failed to register model after {max_retries} attempts")
+                    raise
 
 if __name__ == "__main__":
     main() 
