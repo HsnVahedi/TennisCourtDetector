@@ -23,7 +23,7 @@ def main():
     # If 'MLFLOW_TRACKING_ARN' is set in the environment, we can pass it to mlflow.set_tracking_uri(...).
     # ----------------------------------------------------------------------------
     tracking_uri = os.environ.get("MLFLOW_TRACKING_ARN")
-    mlflow.set_tracking_uri(tracking_uri)
+    # mlflow.set_tracking_uri(tracking_uri)
     
     # ----------------------------------------------------------------------------
     # ADDED: Turn on MLflow autologging for PyTorch
